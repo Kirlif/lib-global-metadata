@@ -1,0 +1,32 @@
+apply plugin: 'java'
+
+group 'com.reandroid.unity.metadata'
+version '1.0.0'
+
+java {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile(files("$rootProject.projectDir/libs/ARSCLib.jar"))
+}
+
+processResources {
+    filesMatching('lib-global-metadata.properties') {
+        expand('version': version)
+    }
+}
+
+javadoc {
+    exclude('zorg/**')
+}
+jar {
+    exclude('zorg/**')
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+}
+

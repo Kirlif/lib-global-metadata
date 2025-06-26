@@ -1,0 +1,8 @@
+/.gradle/
+/build/
+/build/classes/java/main/
+/.github/
+/.idea/
+/premium/
+/lib-elf/
+/src/main/java/zorg/
