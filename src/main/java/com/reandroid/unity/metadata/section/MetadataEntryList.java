@@ -188,22 +188,32 @@ public class MetadataEntryList<T extends SectionData> extends FixedBlockContaine
         return 0;
     }
     public T searchByIdx(int idx) {
+        return searchByIdx(false, idx);
+    }
+    public T searchByIdx(boolean nearest, int idx) {
+        return search(nearest, idx, SectionData::getIdx);
+    }
+    public T search(int idx, IntegerSupplier<? super T> supplier) {
+        return search(false, idx, supplier);
+    }
+    public T search(boolean nearest, int idx, IntegerSupplier<? super T> supplier) {
         if (idx == SectionData.INVALID_IDX) {
             return null;
         }
-        return search(idx, SectionData::getIdx);
-    }
-    public T search(int idx, IntegerSupplier<? super T> supplier) {
-        T item = binarySearch(idx, supplier);
+        T item = binarySearch(false, idx, supplier);
         if (item == null) {
             item = lazySearch(idx, supplier);
+            if (nearest && item == null) {
+                item = binarySearch(true, idx, supplier);
+            }
         }
         return item;
     }
-    public T binarySearch(int idx, IntegerSupplier<? super T> supplier) {
+    public T binarySearch(boolean nearest, int idx, IntegerSupplier<? super T> supplier) {
         // Assumed all entries are ordered in ascending offset
         int start = 0;
         int end = size() - 1;
+        T nearestItem = null;
         while (end >= start) {
             int mid = start + ((end - start) / 2);
             T item = get(mid);
@@ -212,12 +222,15 @@ public class MetadataEntryList<T extends SectionData> extends FixedBlockContaine
                 return item;
             }
             if (test < idx) {
+                if (nearest) {
+                    nearestItem = item;
+                }
                 start = mid + 1;
             } else {
                 end = mid - 1;
             }
         }
-        return null;
+        return nearestItem;
     }
     public T lazySearch(int offset, IntegerSupplier<? super T> supplier) {
         int size = size();

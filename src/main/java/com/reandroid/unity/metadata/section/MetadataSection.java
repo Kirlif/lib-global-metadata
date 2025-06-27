@@ -98,6 +98,9 @@ public class MetadataSection<T extends SectionData> extends FixedBlockContainer 
     public T searchByIdx(int i) {
         return entryList.searchByIdx(i);
     }
+    public T searchByIdx(boolean nearest, int i) {
+        return entryList.searchByIdx(nearest, i);
+    }
     public void onPreRemove(T item) {
 
     }

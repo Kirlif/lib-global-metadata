@@ -22,6 +22,7 @@ import com.reandroid.unity.metadata.section.MetadataSectionType;
 import com.reandroid.utils.StringsUtil;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.StandardCharsets;
@@ -53,6 +54,18 @@ public class CodeStringData extends MDString implements OffsetIdxData {
         return countBytes();
     }
 
+    public CodeStringData createOverlappingAt(int offset) {
+        int baseOffset = getOffset();
+        if (offset == baseOffset) {
+            return this;
+        }
+        int size = getDataSize();
+        if (offset < baseOffset || offset >= baseOffset + getDataSize()) {
+            throw new IndexOutOfBoundsException("Offset out of range: "
+                    + offset + ", base = " + baseOffset + ", size = " + size);
+        }
+        return new Overlapping(this, offset - baseOffset);
+    }
     @Override
     public void onReadBytes(BlockReader reader) throws IOException {
         setOffset(reader.getPosition());
@@ -108,5 +121,65 @@ public class CodeStringData extends MDString implements OffsetIdxData {
     @Override
     public String toString() {
         return get();
+    }
+
+    static class Overlapping extends CodeStringData {
+
+        private final CodeStringData base;
+        private final int relativeOffset;
+
+        public Overlapping(CodeStringData base, int relativeOffset) {
+            super();
+            this.base = base;
+            this.relativeOffset = relativeOffset;
+
+            this.setParent(base.getParent());
+            this.setIndex(base.getIndex());
+        }
+
+        @Override
+        public String get() {
+            byte[] bytes = base.getBytes();
+            int length = bytes.length - 1 - relativeOffset;
+            return new String(bytes,
+                    relativeOffset,
+                    length,
+                    StandardCharsets.UTF_8);
+        }
+        @Override
+        public void set(String text) {
+            if (!text.equals(get())) {
+                throw new IllegalArgumentException(
+                        "Can not set string on overlapped string");
+            }
+        }
+        @Override
+        public int getOffset() {
+            return base.getOffset() + relativeOffset;
+        }
+        @Override
+        public void setOffset(int offset) {
+            if (offset != getOffset()) {
+                throw new IllegalArgumentException(
+                        "Can not set offset on overlapped string");
+            }
+        }
+        @Override
+        public int getDataSize() {
+            return base.getDataSize() - relativeOffset;
+        }
+        @Override
+        public CodeStringData createOverlappingAt(int offset) {
+            return base.createOverlappingAt(offset);
+        }
+
+        @Override
+        public void onReadBytes(BlockReader reader) throws IOException {
+            throw new IOException("Overlapping string");
+        }
+        @Override
+        public int onWriteBytes(OutputStream stream) throws IOException {
+            throw new IOException("Overlapping string");
+        }
     }
 }

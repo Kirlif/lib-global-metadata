@@ -29,9 +29,15 @@ public class SectionCodeString extends SectionStringData<CodeStringData> {
 
     @Override
     public CodeStringData getByIdx(int offset) {
-        return searchByIdx(offset);
+        CodeStringData data = searchByIdx(offset);
+        if (data == null) {
+            CodeStringData nearest = searchByIdx(true, offset);
+            if (nearest != null) {
+                data = nearest.createOverlappingAt(offset);
+            }
+        }
+        return data;
     }
-
     @Override
     public void onReadBytes(BlockReader reader) throws IOException {
         reader.seek(getOffset());
@@ -39,8 +45,7 @@ public class SectionCodeString extends SectionStringData<CodeStringData> {
         int size = getSectionSize();
         BlockReader stringReader = reader.create(size);
         while (stringReader.isAvailable()) {
-            CodeStringData codeStringData = stringList.createNext();
-            codeStringData.onReadBytes(stringReader);
+            stringList.createNext().onReadBytes(stringReader);
         }
         getEntriesAlignment().align(reader);
         stringReader.close();
