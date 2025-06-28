@@ -31,6 +31,8 @@ import com.reandroid.utils.ObjectsUtil;
 public class SectionData extends FixedBlockContainer implements
         IdxData, LinkableItem, JSONConvert<JSONObject>, JsonData {
 
+    private SectionData mReplacement;
+
     public SectionData(int childesCount) {
         super(childesCount);
     }
@@ -40,8 +42,40 @@ public class SectionData extends FixedBlockContainer implements
         return getIndex();
     }
 
+    public Object getKey() {
+        return new DataKey(this);
+    }
+
     public Spec getSpec() {
         return null;
+    }
+
+    public SectionData getReplacement() {
+        SectionData result = this;
+        SectionData data;
+        while ((data = result.mReplacement) != null) {
+            result = data;
+        }
+        return result;
+    }
+    public void setReplacement(SectionData data) {
+        if (data != this) {
+            if (data != null) {
+                data = data.getReplacement();
+            }
+            if (data != this) {
+                this.mReplacement = data;
+            }
+        }
+    }
+    public boolean isRemoved() {
+        return getParent() == null;
+    }
+    public void removeSelf() {
+        MetadataSection<SectionData> section = ObjectsUtil.cast(getParentSection());
+        if (section != null) {
+            section.remove(this);
+        }
     }
 
     public double getGlobalMetadataVersion() {

@@ -21,14 +21,14 @@ import com.reandroid.common.BytesOutputStream;
 import com.reandroid.json.JSONConvert;
 import com.reandroid.json.JSONObject;
 import com.reandroid.unity.metadata.data.BlobValueData;
-import com.reandroid.unity.metadata.data.CodeStringData;
 import com.reandroid.unity.metadata.data.CustomAttributeData;
 import com.reandroid.unity.metadata.data.SectionData;
 import com.reandroid.unity.metadata.data.StringLiteralData;
 import com.reandroid.unity.metadata.header.MetadataFileHeader;
+import com.reandroid.unity.metadata.section.MetadataSection;
 import com.reandroid.unity.metadata.section.MetadataSectionList;
 import com.reandroid.unity.metadata.section.MetadataSectionType;
-import com.reandroid.unity.metadata.section.MetadataSection;
+import com.reandroid.unity.metadata.section.SectionCodeString;
 import com.reandroid.unity.metadata.section.SectionStringData;
 import com.reandroid.unity.metadata.value.MetadataValue;
 import com.reandroid.utils.ObjectsUtil;
@@ -72,7 +72,7 @@ public class GlobalMetadataFile extends FixedBlockContainer implements JSONConve
     public SectionStringData<StringLiteralData> getLiteralStringsData() {
         return ObjectsUtil.cast(getSection(MetadataSectionType.STRING_LITERAL_DATA));
     }
-    public SectionStringData<CodeStringData> getCodeStringsData() {
+    public SectionCodeString getCodeStringsData() {
         return ObjectsUtil.cast(getSection(MetadataSectionType.CODE_STRING));
     }
     public<T extends SectionData> MetadataSection<T> getSection(MetadataSectionType<T> sectionType) {

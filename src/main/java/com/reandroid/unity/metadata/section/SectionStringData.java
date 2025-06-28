@@ -20,24 +20,23 @@ import com.reandroid.json.JSONArray;
 import com.reandroid.json.JSONObject;
 import com.reandroid.unity.metadata.header.MetadataSectionHeader;
 import com.reandroid.unity.metadata.data.MDString;
+import com.reandroid.utils.CompareUtil;
 import com.reandroid.utils.ObjectsUtil;
+import com.reandroid.utils.collection.ArrayCollection;
 import com.reandroid.utils.collection.ComputeIterator;
-import com.reandroid.utils.collection.GroupMap;
 
 import java.util.Iterator;
+import java.util.List;
 
-public abstract class SectionStringData<T extends MDString> extends MetadataSection<T> implements Iterable<T> {
-
-    private final GroupMap<String, T> groupMap;
-
-    private boolean mModified;
+public abstract class SectionStringData<T extends MDString> extends
+        MetadataSection<T> implements Iterable<T> {
 
     public SectionStringData(Creator<T> creator, MetadataSectionHeader sectionHeader) {
         super(creator, sectionHeader);
 
-        this.groupMap = new GroupMap<>();
-
         getEntriesAlignment().setAlignment(4);
+
+        getPoolMap().setFavouriteObjectsSorter(CompareUtil.getComparableComparator());
     }
     public SectionStringData(MetadataSectionHeader offsetSize) {
         this(ObjectsUtil.cast(offsetSize.getCreator()), offsetSize);
@@ -47,15 +46,15 @@ public abstract class SectionStringData<T extends MDString> extends MetadataSect
         return get(i);
     }
     public T getString(String text) {
-        return groupMap.get(text);
+        return getPoolMap().get(text);
     }
     public T getOrCreate(String text) {
-        GroupMap<String, T> groupMap = this.groupMap;
-        T mdString = groupMap.get(text);
+        StringPoolMap<T> map = this.getPoolMap();
+        T mdString = map.get(text);
         if (mdString == null) {
             mdString = createNext();
             mdString.set(text);
-            groupMap.put(text, mdString);
+            map.put(text, mdString);
         }
         return mdString;
     }
@@ -63,18 +62,43 @@ public abstract class SectionStringData<T extends MDString> extends MetadataSect
         return ComputeIterator.of(iterator(), MDString::get);
     }
 
-    public void buildMap() {
-        GroupMap<String, T> map = this.groupMap;
-        map.clear();
-        for (T mdString : this) {
-            map.put(mdString.get(), mdString);
-        }
+    public StringPoolMap<T> getPoolMap() {
+        return (StringPoolMap<T>) super.getPoolMap();
     }
-    public void onStringChanged(String old, String text) {
-        groupMap.updateKey(old, text);
-        if (!mModified) {
-            mModified = true;
+    @Override
+    StringPoolMap<T> newPoolMap() {
+        return new StringPoolMap<>();
+    }
+
+    public void reBuildMap() {
+        getPoolMap().initialize(getCount(), getEntryList().iterator());
+    }
+    public boolean clearDuplicates() {
+        List<T> removeList = new ArrayCollection<>();
+        getPoolMap().findDuplicates(
+                (item1, item2) -> CompareUtil.compare(item1.get(), item2.get()),
+                list -> {
+            T first = list.get(0);
+            int size = list.size();
+            for (int i = 1; i < size; i++) {
+                T item = list.get(i);
+                item.setReplacement(first);
+                removeList.add(item);
+            }
+        });
+        for (T item : removeList) {
+            item.removeSelf();
         }
+        return !removeList.isEmpty();
+    }
+    public void onKeyChanged(String old, String text, T stringData) {
+        getPoolMap().updateKey(old, text, stringData);
+    }
+
+    @Override
+    public void onPreRemove(T item) {
+        getPoolMap().remove(item.get(), item);
+        super.onPreRemove(item);
     }
 
     @Override
@@ -92,7 +116,7 @@ public abstract class SectionStringData<T extends MDString> extends MetadataSect
         for (int i = 0; i < count; i++) {
             get(i).set(jsonArray.getString(i));
         }
-        buildMap();
+        reBuildMap();
     }
 
     @Override

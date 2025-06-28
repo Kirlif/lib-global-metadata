@@ -42,6 +42,10 @@ public class CodeStringIndex extends DefinitionIndex<CodeStringData> {
         return (StringSpec) super.getSpec();
     }
 
+    @Override
+    public boolean enableUpdate() {
+        return true;
+    }
 
     @Override
     public Object getJson() {

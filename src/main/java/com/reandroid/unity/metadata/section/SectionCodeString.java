@@ -16,10 +16,13 @@
 package com.reandroid.unity.metadata.section;
 
 import com.reandroid.arsc.io.BlockReader;
+import com.reandroid.json.JSONObject;
 import com.reandroid.unity.metadata.data.CodeStringData;
 import com.reandroid.unity.metadata.header.MetadataSectionHeader;
+import com.reandroid.unity.metadata.util.JsonDataUtil;
 
 import java.io.IOException;
+import java.util.List;
 
 public class SectionCodeString extends SectionStringData<CodeStringData> {
 
@@ -31,12 +34,80 @@ public class SectionCodeString extends SectionStringData<CodeStringData> {
     public CodeStringData getByIdx(int offset) {
         CodeStringData data = searchByIdx(offset);
         if (data == null) {
-            CodeStringData nearest = searchByIdx(true, offset);
-            if (nearest != null) {
-                data = nearest.createOverlappingAt(offset);
+            data = createOverlapping(offset);
+        }
+        return data;
+    }
+
+    @Override
+    public void remove(CodeStringData item) {
+        if (item != null && item.isOverlapping()) {
+            onPreRemove(item);
+        } else {
+            super.remove(item);
+        }
+    }
+
+    @Override
+    public void onPreRemove(CodeStringData item) {
+        if (item != null && item.isOverlapping()) {
+            if (getPoolMap().removeAppendix(item) != null) {
+                item.setParent(null);
+            }
+        }
+        super.onPreRemove(item);
+    }
+
+    private CodeStringData createOverlapping(int offset) {
+        CodeStringData data = null;
+        CodeStringData nearest = searchByIdx(true, offset);
+        if (nearest != null) {
+            data = nearest.createOverlappingAt(offset);
+            StringPoolMap<CodeStringData> poolMap = getPoolMap();
+            String key = data.get();
+            CodeStringData exist = poolMap.get(key);
+            if (exist == null) {
+                poolMap.putAppendix(key, data);
+            } else {
+                data = exist;
             }
         }
         return data;
+    }
+
+    public boolean optimize() {
+        boolean optimized = clearDuplicates();
+        List<CodeStringData> dataList = asList();
+        dataList.sort(CodeStringData::compareReversed);
+        int size = dataList.size();
+        boolean overlapped = false;
+        for (int i = 0; i < size; i++) {
+            CodeStringData data = dataList.get(i);
+            if (data.getDataSize() < 2) {
+                continue;
+            }
+            CodeStringData next = null;
+            for (int j = i + 1; j < size; j++) {
+                CodeStringData test = dataList.get(j);
+                if (test.endsWith(data)) {
+                    next = test;
+                } else {
+                    break;
+                }
+            }
+            if (next == null || data.equalsTo(next)) {
+                continue;
+            }
+            CodeStringData replace = createOverlapping(next.getOffset() + next.getDataSize() - data.getDataSize());
+            if (!overlapped && replace.isOverlapping()) {
+                overlapped = true;
+            }
+        }
+        if (overlapped) {
+            optimized = true;
+            clearDuplicates();
+        }
+        return optimized;
     }
     @Override
     public void onReadBytes(BlockReader reader) throws IOException {
@@ -50,6 +121,21 @@ public class SectionCodeString extends SectionStringData<CodeStringData> {
         getEntriesAlignment().align(reader);
         stringReader.close();
         reader.offset(size);
-        buildMap();
+        reBuildMap();
+    }
+
+    @Override
+    public JSONObject toJson() {
+        JSONObject jsonObject = super.toJson();
+        if (jsonObject != null) {
+            StringPoolMap<CodeStringData> poolMap = getPoolMap();
+            int size = poolMap.appendicesSize();
+            if (size != 0) {
+                jsonObject.put("overlapped_count", size);
+                jsonObject.put("overlapped_strings",
+                        JsonDataUtil.collectOptionalToJson(poolMap.appendices()));
+            }
+        }
+        return jsonObject;
     }
 }

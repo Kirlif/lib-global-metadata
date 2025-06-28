@@ -26,9 +26,11 @@ import com.reandroid.unity.metadata.header.MetadataSectionHeader;
 import com.reandroid.unity.metadata.base.IntegerSupplier;
 import com.reandroid.unity.metadata.data.SectionData;
 import com.reandroid.utils.ObjectsUtil;
+import com.reandroid.utils.collection.ArrayCollection;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 import java.util.function.Predicate;
 
 public class MetadataEntryList<T extends SectionData> extends FixedBlockContainer
@@ -108,6 +110,9 @@ public class MetadataEntryList<T extends SectionData> extends FixedBlockContaine
     }
     public void clear() {
         entryList.clearChildes();
+    }
+    public List<T> asList() {
+        return new ArrayCollection<>(entryList.getChildes());
     }
     public void onPreRemove(T item) {
         getParentSection().onPreRemove(item);
@@ -200,14 +205,7 @@ public class MetadataEntryList<T extends SectionData> extends FixedBlockContaine
         if (idx == SectionData.INVALID_IDX) {
             return null;
         }
-        T item = binarySearch(false, idx, supplier);
-        if (item == null) {
-            item = lazySearch(idx, supplier);
-            if (nearest && item == null) {
-                item = binarySearch(true, idx, supplier);
-            }
-        }
-        return item;
+        return binarySearch(nearest, idx, supplier);
     }
     public T binarySearch(boolean nearest, int idx, IntegerSupplier<? super T> supplier) {
         // Assumed all entries are ordered in ascending offset
@@ -231,16 +229,6 @@ public class MetadataEntryList<T extends SectionData> extends FixedBlockContaine
             }
         }
         return nearestItem;
-    }
-    public T lazySearch(int offset, IntegerSupplier<? super T> supplier) {
-        int size = size();
-        for (int i = 0; i < size; i++) {
-            T item = get(i);
-            if (offset == supplier.compute(item)) {
-                return item;
-            }
-        }
-        return null;
     }
 
     @Override
@@ -283,16 +271,8 @@ public class MetadataEntryList<T extends SectionData> extends FixedBlockContaine
     }
     @Override
     public JSONArray toJson() {
-        int max = 5000;
-        if (getParentSection().getSectionType() == MetadataSectionType.PROPERTIES) {
-            max = 500000;
-        }
         int count = size();
-        if (count > max) {
-            count = max;
-        }
         JSONArray jsonArray = new JSONArray(count);
-
         for (int i = 0; i < count; i++) {
             jsonArray.put(get(i).getJson());
         }

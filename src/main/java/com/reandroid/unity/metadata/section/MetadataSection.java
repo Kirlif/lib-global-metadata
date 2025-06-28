@@ -40,11 +40,15 @@ public class MetadataSection<T extends SectionData> extends FixedBlockContainer 
     private final MetadataSectionHeader sectionHeader;
     private final MetadataEntryList<T> entryList;
 
+    private final SectionPoolMap<T> poolMap;
+
     public MetadataSection(int childesCount, Creator<T> creator, MetadataSectionHeader sectionHeader) {
         super(childesCount + 2);
         this.sectionAlignment = new MetadataAlignment();
         this.entryList = new MetadataEntryList<>(creator);
         this.sectionHeader = sectionHeader;
+
+        poolMap = newPoolMap();
 
         addChild(0, sectionAlignment);
         addChild(childesCount + 1, entryList);
@@ -95,12 +99,27 @@ public class MetadataSection<T extends SectionData> extends FixedBlockContainer 
     public void clear() {
         entryList.clear();
     }
+    public void remove(T item) {
+        entryList.remove(item);
+    }
+    public List<T> asList() {
+        return entryList.asList();
+    }
     public T searchByIdx(int i) {
         return entryList.searchByIdx(i);
     }
     public T searchByIdx(boolean nearest, int i) {
         return entryList.searchByIdx(nearest, i);
     }
+
+    SectionPoolMap<T> newPoolMap() {
+        return new SectionPoolMap<>();
+    }
+    public SectionPoolMap<T> getPoolMap() {
+        return poolMap;
+    }
+
+
     public void onPreRemove(T item) {
 
     }

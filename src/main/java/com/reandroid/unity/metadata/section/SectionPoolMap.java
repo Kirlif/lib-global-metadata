@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.reandroid.unity.metadata.base;
+package com.reandroid.unity.metadata.section;
 
-public class MDCompressedSInt32 extends MDCompressedInt32 {
+import com.reandroid.unity.metadata.data.SectionData;
+import com.reandroid.utils.collection.MultiMap;
 
-    public MDCompressedSInt32(VersionRange versionRange) {
-        super(versionRange);
-    }
-    public MDCompressedSInt32() {
+import java.util.Iterator;
+
+public class SectionPoolMap<T extends SectionData> extends MultiMap<Object, T> {
+
+    public SectionPoolMap() {
         super();
     }
 
-    @Override
-    public final boolean isSigned() {
-        return true;
+    public void initialize(int initialSize, Iterator<? extends T> iterator) {
+        clear();
+        if (initialSize != 0) {
+            setInitialSize(initialSize);
+        }
+        super.putAll(T::getKey, iterator);
     }
-
 }

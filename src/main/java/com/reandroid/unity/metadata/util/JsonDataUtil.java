@@ -16,6 +16,7 @@
 package com.reandroid.unity.metadata.util;
 
 import com.reandroid.json.JSONArray;
+import com.reandroid.json.JSONConvert;
 import com.reandroid.json.JSONObject;
 
 import java.util.Iterator;
@@ -23,12 +24,27 @@ import java.util.Iterator;
 public class JsonDataUtil {
 
     public static JSONArray collectOptional(Iterator<?> iterator) {
+        return collectOptional(null, iterator);
+    }
+    public static JSONArray collectOptional(JSONArray jsonArray, Iterator<?> iterator) {
+        if (!iterator.hasNext()) {
+            return jsonArray;
+        }
+        if (jsonArray == null) {
+            jsonArray = new JSONArray();
+        }
+        while (iterator.hasNext()) {
+            jsonArray.put(iterator.next());
+        }
+        return jsonArray;
+    }
+    public static<T extends JSONConvert<?>> JSONArray collectOptionalToJson(Iterator<T> iterator) {
         if (!iterator.hasNext()) {
             return null;
         }
         JSONArray jsonArray = new JSONArray();
         while (iterator.hasNext()) {
-            jsonArray.put(iterator.next());
+            jsonArray.put(iterator.next().toJson());
         }
         return jsonArray;
     }

@@ -25,6 +25,7 @@ import com.reandroid.unity.metadata.data.SectionData;
 import com.reandroid.unity.metadata.section.MetadataSection;
 import com.reandroid.unity.metadata.section.MetadataSectionType;
 import com.reandroid.unity.metadata.spec.Spec;
+import com.reandroid.utils.ObjectsUtil;
 
 
 public class DefinitionIndex<T extends SectionData> extends MDInt implements
@@ -127,6 +128,13 @@ public class DefinitionIndex<T extends SectionData> extends MDInt implements
 
     private void update() {
         T data = this.getData();
+        if (data != null) {
+            T replace = ObjectsUtil.cast(data.getReplacement());
+            if (replace != data) {
+                setDataInternal(replace);
+                data = replace;
+            }
+        }
         int idx;
         if (data == null) {
             idx = SectionData.INVALID_IDX;

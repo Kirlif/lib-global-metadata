@@ -37,6 +37,10 @@ public class SecStringLiteralData extends SectionStringData<StringLiteralData> {
         return searchByIdx(i);
     }
 
+    @Override
+    public boolean clearDuplicates() {
+        return false;
+    }
 
     @Override
     public void onReadBytes(BlockReader reader) throws IOException {
@@ -48,7 +52,7 @@ public class SecStringLiteralData extends SectionStringData<StringLiteralData> {
         entryList.readEntries(sectionReader);
         getEntriesAlignment().align(sectionReader);
         reader.seek(size);
-        buildMap();
+        reBuildMap();
     }
 
     static class StringCreator implements Creator<StringLiteralData> {

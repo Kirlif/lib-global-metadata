@@ -67,6 +67,14 @@ public class CodeStringData extends MDString implements OffsetIdxData {
         return new Overlapping(this, offset - baseOffset);
     }
     @Override
+    public boolean isOverlapping() {
+        return false;
+    }
+    @Override
+    public CodeStringData base() {
+        return null;
+    }
+    @Override
     public void onReadBytes(BlockReader reader) throws IOException {
         setOffset(reader.getPosition());
         int length = findEndingZero(reader);
@@ -109,7 +117,20 @@ public class CodeStringData extends MDString implements OffsetIdxData {
     @Override
     public Object getJson() {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("id", getIdx());
+        jsonObject.put("idx", getIdx());
+        jsonObject.put("string", get());
+        return jsonObject;
+    }
+
+    @Override
+    public void fromJson(JSONObject json) {
+        set(json.getString("string"));
+    }
+
+    @Override
+    public JSONObject toJson() {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("idx", getIdx());
         jsonObject.put("string", get());
         return jsonObject;
     }
@@ -118,6 +139,12 @@ public class CodeStringData extends MDString implements OffsetIdxData {
     public MetadataSectionType<CodeStringData> getSectionType() {
         return MetadataSectionType.CODE_STRING;
     }
+
+    @Override
+    public CodeStringData getReplacement() {
+        return (CodeStringData) super.getReplacement();
+    }
+
     @Override
     public String toString() {
         return get();
@@ -137,10 +164,13 @@ public class CodeStringData extends MDString implements OffsetIdxData {
             this.setIndex(base.getIndex());
         }
 
+        public CodeStringData base() {
+            return base.getReplacement();
+        }
         @Override
         public String get() {
-            byte[] bytes = base.getBytes();
-            int length = bytes.length - 1 - relativeOffset;
+            byte[] bytes = base().getBytes();
+            int length = bytes.length - relativeOffset - 1;
             return new String(bytes,
                     relativeOffset,
                     length,
@@ -155,7 +185,7 @@ public class CodeStringData extends MDString implements OffsetIdxData {
         }
         @Override
         public int getOffset() {
-            return base.getOffset() + relativeOffset;
+            return base().getOffset() + relativeOffset;
         }
         @Override
         public void setOffset(int offset) {
@@ -166,11 +196,34 @@ public class CodeStringData extends MDString implements OffsetIdxData {
         }
         @Override
         public int getDataSize() {
-            return base.getDataSize() - relativeOffset;
+            return base().getDataSize() - relativeOffset;
         }
         @Override
         public CodeStringData createOverlappingAt(int offset) {
-            return base.createOverlappingAt(offset);
+            return base().createOverlappingAt(offset + relativeOffset);
+        }
+        @Override
+        public boolean isOverlapping() {
+            return true;
+        }
+        @Override
+        public boolean isRemoved() {
+            return base().isRemoved();
+        }
+
+        @Override
+        public void removeSelf() {
+            super.removeSelf();
+        }
+
+        @Override
+        public byte[] getBytes() {
+            byte[] baseBytes = base().getBytes();
+            int start = relativeOffset;
+            int length = baseBytes.length - start;
+            byte[] bytes = new byte[length];
+            System.arraycopy(baseBytes, start, bytes, 0, length);
+            return bytes;
         }
 
         @Override
@@ -180,6 +233,17 @@ public class CodeStringData extends MDString implements OffsetIdxData {
         @Override
         public int onWriteBytes(OutputStream stream) throws IOException {
             throw new IOException("Overlapping string");
+        }
+
+        @Override
+        public void fromJson(JSONObject json) {
+        }
+        @Override
+        public JSONObject toJson() {
+            JSONObject jsonObject = super.toJson();
+            jsonObject.put("base", base().get());
+            jsonObject.put("base_idx", base().getIdx());
+            return jsonObject;
         }
     }
 }
