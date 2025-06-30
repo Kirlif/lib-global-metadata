@@ -15,7 +15,6 @@
  */
 package com.reandroid.unity.metadata.data;
 
-import com.reandroid.arsc.io.BlockReader;
 import com.reandroid.json.JSONObject;
 import com.reandroid.unity.metadata.index.DefaultValueDataIndex;
 import com.reandroid.unity.metadata.index.FieldDefinitionIndex;
@@ -23,8 +22,6 @@ import com.reandroid.unity.metadata.index.TypeDefinitionIndex;
 import com.reandroid.unity.metadata.section.MetadataSectionType;
 import com.reandroid.unity.metadata.spec.FieldSpec;
 import com.reandroid.unity.metadata.spec.StringSpec;
-
-import java.io.IOException;
 
 public class FieldDefaultValueData extends SectionData {
 
@@ -42,11 +39,6 @@ public class FieldDefaultValueData extends SectionData {
         addChild(0, fieldIndex);
         addChild(1, typeIndex);
         addChild(2, dataIndex);
-    }
-
-    @Override
-    public void onReadBytes(BlockReader reader) throws IOException {
-        super.onReadBytes(reader);
     }
 
     @Override

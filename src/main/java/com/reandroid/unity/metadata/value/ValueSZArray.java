@@ -23,6 +23,7 @@ import com.reandroid.unity.metadata.base.JsonData;
 import com.reandroid.unity.metadata.base.LinkableItem;
 import com.reandroid.unity.metadata.base.MDBlockItem;
 import com.reandroid.unity.metadata.base.MDCompressedSInt32;
+import com.reandroid.unity.metadata.data.TypeDefinitionData;
 import com.reandroid.unity.metadata.spec.SpecList;
 import com.reandroid.utils.StringsUtil;
 import com.reandroid.utils.collection.ComputeIterator;
@@ -107,7 +108,7 @@ public class ValueSZArray extends MetadataValue implements LinkableItem {
         }
     }
 
-    static class SZArrayElementList extends BlockList<MetadataValue> {
+    static class SZArrayElementList extends BlockList<MetadataValue> implements ValueParent {
 
         private final IntegerReference countReference;
         private final BooleanReference arrayElementsAreDifferent;
@@ -119,6 +120,12 @@ public class ValueSZArray extends MetadataValue implements LinkableItem {
             this.countReference = countReference;
             this.arrayElementsAreDifferent = arrayElementsAreDifferent;
             this.arrayElementType = arrayElementType;
+        }
+
+        @Override
+        public TypeDefinitionData getValueTypeDefinition() {
+            return arrayElementType.getEnumTypeIndex()
+                    .getEnumElementTypeData();
         }
 
         @Override

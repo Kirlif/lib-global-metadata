@@ -20,6 +20,7 @@ import com.reandroid.arsc.base.DirectStreamReader;
 import com.reandroid.arsc.container.FixedBlockContainer;
 import com.reandroid.json.JSONObject;
 import com.reandroid.unity.metadata.base.JsonData;
+import com.reandroid.unity.metadata.section.BlobDataPool;
 import com.reandroid.unity.metadata.spec.Spec;
 import com.reandroid.utils.ObjectsUtil;
 
@@ -84,6 +85,12 @@ public class MetadataValue extends FixedBlockContainer implements DirectStreamRe
     @Override
     public void setJson(Object obj) {
 
+    }
+    public void onDataChanged() {
+        BlobDataPool dataPool = getParentInstance(BlobDataPool.class);
+        if (dataPool != null) {
+            dataPool.markModified();
+        }
     }
 
     @Override

@@ -29,6 +29,7 @@ import com.reandroid.utils.ObjectsUtil;
 import com.reandroid.utils.collection.ArrayCollection;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -39,8 +40,8 @@ public class MetadataEntryList<T extends SectionData> extends FixedBlockContaine
     private final BlockList<T> entryList;
     private final MetadataAlignment alignment;
 
-    public MetadataEntryList(Creator<? extends T> creator) {
-        super(2);
+    public MetadataEntryList(int childesCount, Creator<? extends T> creator) {
+        super(childesCount + 2);
         this.entryList = new BlockList<T>(creator) {
             @Override
             public void onPreRemove(T item) {
@@ -50,8 +51,12 @@ public class MetadataEntryList<T extends SectionData> extends FixedBlockContaine
         };
         this.alignment = new MetadataAlignment(0);
 
-        addChild(0, entryList);
-        addChild(1, alignment);
+        addChild(childesCount, entryList);
+        addChild(childesCount + 1, alignment);
+    }
+
+    public MetadataEntryList(Creator<? extends T> creator) {
+        this(0, creator);
     }
 
     public T getOrCreateAt(int index) {
@@ -103,6 +108,9 @@ public class MetadataEntryList<T extends SectionData> extends FixedBlockContaine
     }
     public void add(T item) {
         entryList.add(item);
+    }
+    public void add(int i, T item) {
+        entryList.add(i, item);
     }
 
     public boolean isEmpty() {
@@ -170,11 +178,15 @@ public class MetadataEntryList<T extends SectionData> extends FixedBlockContaine
 
     @Override
     public int countBytes() {
+        int count = countEntryBytes();
+        count += getAlignment().size();
+        return count;
+    }
+    int countEntryBytes() {
         int count = countBytesFast();
         if (count == 0) {
-            count = super.countBytes();
+            count = entryList.countBytes();
         }
-        count += getAlignment().size();
         return count;
     }
 
@@ -236,17 +248,17 @@ public class MetadataEntryList<T extends SectionData> extends FixedBlockContaine
         super.onRefreshed();
         MetadataSection<T> section = getParentSection();
         if (section != null) {
-            section.getSectionHeader().setSize(updateOffsetIdxData());
+            MetadataAlignment alignment = getAlignment();
+            alignment.clear();
+            int size = updateOffsetIdxData();
+            size += alignment.align(size);
+            section.getSectionHeader().setSize(size);
         }
     }
-    private int updateOffsetIdxData() {
-        MetadataAlignment alignment = getAlignment();
-        alignment.clear();
+    int updateOffsetIdxData() {
         BlockList<T> entryList = this.entryList;
         if (!(entryList.getFirst() instanceof OffsetIdxData)) {
-            int length = countBytes();
-            length += alignment.align(length);
-            return length;
+            return countBytes();
         }
         int size = entryList.size();
         int offset = 0;
@@ -255,9 +267,18 @@ public class MetadataEntryList<T extends SectionData> extends FixedBlockContaine
             data.setOffset(offset);
             offset += data.getDataSize();
         }
-        offset += alignment.align(offset);
         return offset;
     }
+    @Override
+    public int onWriteBytes(OutputStream stream) throws IOException {
+        int length = onWriteEntryBytes(stream);
+        length += getAlignment().writeBytes(stream);
+        return length;
+    }
+    int onWriteEntryBytes(OutputStream stream) throws IOException {
+        return entryList.writeBytes(stream);
+    }
+
 
     public MetadataSectionHeader getSectionHeader() {
         MetadataSection<T> section = getParentSection();

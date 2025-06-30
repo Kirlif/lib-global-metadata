@@ -97,6 +97,13 @@ public class GlobalMetadataFile extends FixedBlockContainer implements JSONConve
                 BlobValueData::getValue);
         return CombiningIterator.two(attributes, blobs);
     }
+    public boolean optimize() {
+        if (getSectionList().optimize()) {
+            refresh();
+            return true;
+        }
+        return false;
+    }
 
     @Override
     protected void onRefreshed() {

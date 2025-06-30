@@ -144,6 +144,9 @@ public class MetadataValueFactory {
         if (typeEnum == Il2CppTypeEnum.TYPE_INDEX) {
             return new ValueTypeIndex();
         }
+        if (typeEnum == Il2CppTypeEnum.StaticArrayInitType) {
+            return createValueStaticArrayInitType();
+        }
         if (typeEnum == Il2CppTypeEnum.UNKNOWN) {
             return createUnknown();
         }
@@ -151,5 +154,8 @@ public class MetadataValueFactory {
     }
     public static ValueUnknown createUnknown() {
         return new ValueUnknown();
+    }
+    public static ValueStaticArrayInitType createValueStaticArrayInitType() {
+        return new ValueStaticArrayInitType();
     }
 }

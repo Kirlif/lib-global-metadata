@@ -19,10 +19,8 @@ import com.reandroid.arsc.io.BlockReader;
 import com.reandroid.arsc.item.IntegerReference;
 import com.reandroid.arsc.item.StringReference;
 import com.reandroid.json.JSONObject;
-import com.reandroid.unity.metadata.base.VersionRange;
 import com.reandroid.unity.metadata.base.MDBlockItem;
-import com.reandroid.unity.metadata.base.MDCompressedSInt32;
-import com.reandroid.unity.metadata.base.MDInt;
+import com.reandroid.unity.metadata.base.MetadataInteger;
 import com.reandroid.unity.metadata.spec.StringSpec;
 import com.reandroid.utils.ObjectsUtil;
 import com.reandroid.utils.StringsUtil;
@@ -36,15 +34,12 @@ public class ValueString extends MetadataValue implements StringReference {
     private final ValueStringBlock valueStringBlock;
 
     public ValueString() {
-        super(3, Il2CppTypeEnum.STRING);
-        MDInt oldVersionLength = new MDInt(new VersionRange(null, 28.9));
-        MDCompressedSInt32 newVersionLength = new MDCompressedSInt32(new VersionRange(29.0, null));
-        this.valueStringBlock = new ValueStringBlock(
-                unionLengthReference(oldVersionLength, newVersionLength));
+        super(2, Il2CppTypeEnum.STRING);
+        MetadataInteger length = new MetadataInteger(true);
+        this.valueStringBlock = new ValueStringBlock(length);
 
-        addChild(START_INDEX + 0, oldVersionLength);
-        addChild(START_INDEX + 1, newVersionLength);
-        addChild(START_INDEX + 2, valueStringBlock);
+        addChild(START_INDEX + 0, length);
+        addChild(START_INDEX + 1, valueStringBlock);
 
     }
 
@@ -74,30 +69,6 @@ public class ValueString extends MetadataValue implements StringReference {
     @Override
     public String toString() {
         return "\""+ get() + "\"";
-    }
-
-    private static IntegerReference unionLengthReference(MDInt reference1, MDCompressedSInt32 reference2) {
-        return new IntegerReference() {
-            @Override
-            public int get() {
-                if (reference2.hasValidVersion()) {
-                    return reference2.get();
-                }
-                return reference1.get();
-            }
-            @Override
-            public void set(int value) {
-                if (reference2.hasValidVersion()) {
-                    reference2.set(value);
-                } else {
-                    reference1.set(value);
-                }
-            }
-            @Override
-            public String toString() {
-                return Integer.toString(get());
-            }
-        };
     }
 
     public static class ValueStringBlock extends MDBlockItem {
@@ -131,6 +102,10 @@ public class ValueString extends MetadataValue implements StringReference {
                 if (length != 0) {
                     System.arraycopy(textBytes, 0, bytes, 0, length);
                 }
+            }
+            MetadataValue parent = getParentInstance(MetadataValue.class);
+            if (parent != null) {
+                parent.onDataChanged();
             }
         }
 

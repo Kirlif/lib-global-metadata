@@ -15,9 +15,10 @@
  */
 package com.reandroid.unity.metadata.data;
 
+import com.reandroid.arsc.base.Block;
+import com.reandroid.arsc.base.Creator;
 import com.reandroid.arsc.container.SingleBlockContainer;
 import com.reandroid.arsc.io.BlockReader;
-import com.reandroid.arsc.item.StringReference;
 import com.reandroid.json.JSONObject;
 import com.reandroid.unity.metadata.index.TypeDefinitionIndex;
 import com.reandroid.unity.metadata.section.BlobDataPool;
@@ -26,16 +27,16 @@ import com.reandroid.unity.metadata.section.SecFieldAndParameterDefaultValueData
 import com.reandroid.unity.metadata.spec.Spec;
 import com.reandroid.unity.metadata.spec.SpecPair;
 import com.reandroid.unity.metadata.spec.TypeSpec;
-import com.reandroid.unity.metadata.value.Il2CppTypeEnum;
-import com.reandroid.unity.metadata.value.MetadataValue;
-import com.reandroid.unity.metadata.value.MetadataValueFactory;
-import com.reandroid.unity.metadata.value.ValueUnknown;
+import com.reandroid.unity.metadata.util.CommonUtil;
+import com.reandroid.unity.metadata.value.*;
 import com.reandroid.utils.CompareUtil;
+import com.reandroid.utils.HexUtil;
+import com.reandroid.utils.ObjectsUtil;
 
 import java.io.IOException;
 
 public class BlobValueData extends SectionData implements
-        OffsetIdxData, Comparable<BlobValueData> {
+        OffsetIdxData, ValueParent {
 
     private final SingleBlockContainer<MetadataValue> valueContainer;
     private final TypeDefinitionIndex typeIndex;
@@ -52,13 +53,11 @@ public class BlobValueData extends SectionData implements
         addChild(0, valueContainer);
     }
 
-    public StringReference getValueAsString() {
-        MetadataValue value = getValue();
-        if (value instanceof StringReference) {
-            return (StringReference) value;
-        }
-        return null;
+    @Override
+    public Key getKey() {
+        return checkKey(new Key(getBytes()));
     }
+
     public MetadataValue getValue() {
         return valueContainer.getItem();
     }
@@ -71,45 +70,14 @@ public class BlobValueData extends SectionData implements
 
     public void linkValue() {
         if (getValue() == null) {
+            typeIndex().linkTypes();
             setValue(readValue());
         }
-    }
-    public void initUnknownValue(int nextOffset) {
-        MetadataValue value = getValue();
-        if (!isBlankUnknownValue(value)) {
-            return;
-        }
-        if (value == null) {
-            value = MetadataValueFactory.createUnknown();
-            setValue(value);
-        }
-        readUnknown((ValueUnknown) value, nextOffset);
-    }
-    private void readUnknown(ValueUnknown value, int nextOffset) {
-        int offset = getOffset();
-        value.setSize(nextOffset - offset);
-        BlockReader reader = getDataPool().getBlockReader();
-        reader.seek(offset);
-        try {
-            value.readBytes(reader);
-        } catch (IOException exception) {
-            // unreachable
-            throw new RuntimeException(exception);
-        }
-    }
-    private boolean isBlankUnknownValue(MetadataValue value) {
-        if (value == null) {
-            return true;
-        }
-        if (!(value instanceof ValueUnknown)) {
-            return false;
-        }
-        return ((ValueUnknown) value).size() == 0;
     }
     private MetadataValue readValue() {
         MetadataValue value = MetadataValueFactory.forType(getType());
         if (value == null) {
-            return null;
+            return readUnknown();
         }
         value.setParent(this);
         value.clearEnumBlock();
@@ -119,8 +87,31 @@ public class BlobValueData extends SectionData implements
             value.readBytes(reader);
             return value;
         } catch (IOException exception) {
-            return MetadataValueFactory.createUnknown();
+            return readUnknown();
         }
+    }
+    private MetadataValue readUnknown() {
+        BlobDataPool dataPool = getDataPool();
+        int nextOffset;
+        BlobValueData nextData = dataPool.get(getIndex() + 1);
+        if (nextData != null) {
+            nextOffset = nextData.getOffset();
+        } else {
+            nextOffset = dataPool.poolSize();
+        }
+        ValueUnknown unknown = MetadataValueFactory.createUnknown();
+        unknown.clearEnumBlock();
+        unknown.setParent(this);
+        unknown.setSize(nextOffset - this.getOffset());
+        try {
+            BlockReader reader = getDataPool().getBlockReader();
+            reader.seek(getOffset());
+            unknown.readBytes(reader);
+        } catch (IOException exception) {
+            // unreachable
+            throw new RuntimeException(exception);
+        }
+        return unknown;
     }
     @Override
     public int getIdx() {
@@ -144,12 +135,21 @@ public class BlobValueData extends SectionData implements
     }
 
     public BlobDataPool getDataPool() {
-        return getParentSection().getDataPool();
+        return getParentSection().getEntryList();
     }
 
     @Override
     public SecFieldAndParameterDefaultValueData getParentSection() {
         return (SecFieldAndParameterDefaultValueData) super.getParentSection();
+    }
+
+    public TypeDefinitionIndex typeIndex() {
+        return typeIndex;
+    }
+
+    @Override
+    public TypeDefinitionData getValueTypeDefinition() {
+        return typeIndex().getData();
     }
 
     public Il2CppTypeEnum getType() {
@@ -171,8 +171,7 @@ public class BlobValueData extends SectionData implements
 
     @Override
     public void link() {
-        typeIndex.link();
-        linkValue();
+        typeIndex().linkTypes();
     }
 
     @Override
@@ -180,8 +179,17 @@ public class BlobValueData extends SectionData implements
         return 0;
     }
 
-    @Override
-    public int compareTo(BlobValueData byteValueData) {
+    public int compareBytes(BlobValueData byteValueData) {
+        if (byteValueData == null) {
+            return -1;
+        }
+        if (byteValueData == this) {
+            return 0;
+        }
+        return CommonUtil.compareBytes(getKey().getBytes(),
+                byteValueData.getKey().getBytes());
+    }
+    public int compareOffset(BlobValueData byteValueData) {
         if (byteValueData == null) {
             return -1;
         }
@@ -200,6 +208,7 @@ public class BlobValueData extends SectionData implements
                     typeIndex != TypeDefinitionIndex.NO_TYPE) {
                 json.put("value_type", typeIndex.getJson());
             }
+            json.put("offset", getOffset());
             return json;
         }
         return super.toJson();
@@ -213,6 +222,7 @@ public class BlobValueData extends SectionData implements
             if (value.getTypeEnum() == Il2CppTypeEnum.UNKNOWN && typeIndex != TypeDefinitionIndex.NO_TYPE) {
                 json.put("value_type", typeIndex.getJson());
             }
+            json.put("offset", getOffset());
             return json;
         }
         return toString();
@@ -231,12 +241,11 @@ public class BlobValueData extends SectionData implements
             return false;
         }
         BlobValueData valueData = (BlobValueData) obj;
-        return mOffset == valueData.mOffset &&
-                getParentSection() == valueData.getParentSection();
+        return ObjectsUtil.equals(getKey(), valueData.getKey());
     }
     @Override
     public int hashCode() {
-        return mOffset;
+        return getKey().hashCode();
     }
 
     @Override
@@ -248,4 +257,50 @@ public class BlobValueData extends SectionData implements
         return getOffset() + ":" + getTypeName();
     }
 
+    public static class Key implements Comparable<Key> {
+
+        private final byte[] bytes;
+
+        public Key(byte[] bytes) {
+            this.bytes = bytes;
+        }
+
+        public final byte[] getBytes() {
+            return bytes;
+        }
+
+        @Override
+        public int compareTo(Key key) {
+            if (key == this) {
+                return 0;
+            }
+            return CommonUtil.compareBytes(getBytes(), key.getBytes());
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            Key key = (Key) obj;
+            return Block.areEqual(bytes, key.bytes);
+        }
+
+        @Override
+        public int hashCode() {
+            return CommonUtil.hash(bytes);
+        }
+
+        @Override
+        public String toString() {
+            return HexUtil.toHexString(getBytes());
+        }
+
+    }
+
+    public static final Creator<BlobValueData> CREATOR = () -> {
+        throw new RuntimeException("Creator not supported");
+    };
 }

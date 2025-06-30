@@ -60,6 +60,16 @@ public class TypeDefinitionIndex extends DefinitionIndex<TypeDefinitionData> {
         return null;
     }
 
+    public void linkTypes() {
+        link();
+        TypeDefinitionData data = getData();
+        if (data != null) {
+            data.parentIndex().link();
+            data.elementTypeIndex().link();
+            data.declaringTypeIndex().link();
+        }
+    }
+
     @Override
     public String toString() {
         return get() + "{" + getName() + "}";

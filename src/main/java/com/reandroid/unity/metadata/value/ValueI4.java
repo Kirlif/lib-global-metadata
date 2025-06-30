@@ -16,16 +16,16 @@
 package com.reandroid.unity.metadata.value;
 
 import com.reandroid.arsc.item.IntegerReference;
-import com.reandroid.unity.metadata.base.MDCompressedSInt32;
+import com.reandroid.unity.metadata.base.MetadataInteger;
 import com.reandroid.unity.metadata.spec.PrimitiveSpec;
 
 public class ValueI4 extends MetadataValue implements IntegerReference {
 
-    private final MDCompressedSInt32 value;
+    private final MetadataInteger value;
 
     public ValueI4() {
         super(1, Il2CppTypeEnum.I4);
-        this.value = new MDCompressedSInt32();
+        this.value = new MetadataInteger(true);
 
         addChild(START_INDEX + 0, value);
     }

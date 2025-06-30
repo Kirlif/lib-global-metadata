@@ -75,6 +75,7 @@ public class SectionCodeString extends SectionStringData<CodeStringData> {
         return data;
     }
 
+    @Override
     public boolean optimize() {
         boolean optimized = clearDuplicates();
         List<CodeStringData> dataList = asList();

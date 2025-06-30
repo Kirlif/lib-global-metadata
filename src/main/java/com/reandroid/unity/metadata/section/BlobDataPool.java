@@ -17,35 +17,155 @@ package com.reandroid.unity.metadata.section;
 
 import com.reandroid.arsc.io.BlockReader;
 import com.reandroid.arsc.item.IntegerReference;
-import com.reandroid.unity.metadata.base.MDByteArray;
+import com.reandroid.unity.metadata.data.BlobValueData;
+import com.reandroid.unity.metadata.data.SectionData;
+import com.reandroid.unity.metadata.header.MetadataSectionHeader;
+import com.reandroid.unity.metadata.index.TypeDefinitionIndex;
 
-public class BlobDataPool extends MDByteArray {
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
 
-    private BlockReader blockReader;
+public class BlobDataPool extends MetadataEntryList<BlobValueData> {
 
-    public BlobDataPool(IntegerReference sizeReference) {
-        super(sizeReference);
+    private final BlobByteArray blobByteArray;
+    private boolean mModified;
+
+    public BlobDataPool(MetadataSectionHeader sectionHeader) {
+        super(1, sectionHeader.getCreator());
+        IntegerReference sizeReference = sectionHeader.getSizeReference();
+        IntegerReference readOnlyReference = new IntegerReference() {
+            @Override
+            public int get() {
+                return sizeReference.get();
+            }
+            @Override
+            public void set(int i) {
+                // only section should set
+            }
+            @Override
+            public String toString() {
+                return Integer.toString(get());
+            }
+        };
+        this.blobByteArray = new BlobByteArray(readOnlyReference);
+        addChild(0, blobByteArray);
+        getAlignment().setAlignment(8);
     }
 
-    @Override
-    public void setSize(int size) {
-        setBytesLength(size, true);
+
+    public int poolSize() {
+        return getBlobByteArray().size();
     }
-    public void clear() {
-        setSize(0);
+    private BlobByteArray getBlobByteArray() {
+        return blobByteArray;
     }
 
-    @Override
-    protected void onBytesChanged() {
-        this.blockReader = null;
-    }
-
-    public BlockReader getBlockReader() {
-        BlockReader reader = this.blockReader;
-        if (reader == null) {
-            reader = new BlockReader(getBytesInternal());
-            this.blockReader = reader;
+    public BlobValueData get(TypeDefinitionIndex typeIndex, int offset) {
+        BlobValueData data = searchByIdx(offset);
+        if (data == null) {
+            return null;
         }
-        return reader;
+        if (data.typeIndex().get() == typeIndex.get()) {
+            return data;
+        }
+        int size = size();
+        int start = data.getIndex();
+        for (int i = start + 1; i < size; i++) {
+            data = get(i);
+            if (data.getOffset() == offset) {
+                if (data.typeIndex().get() == typeIndex.get()) {
+                    return data;
+                }
+            } else {
+                break;
+            }
+        }
+        for (int i = start - 1; i >= 0; i--) {
+            data = get(i);
+            if (data.getOffset() == offset) {
+                if (data.typeIndex().get() == typeIndex.get()) {
+                    return data;
+                }
+            } else {
+                break;
+            }
+        }
+        return null;
+    }
+    public BlobValueData getOrInitialize(TypeDefinitionIndex typeIndex, int offset) {
+        if (offset == SectionData.INVALID_IDX) {
+            return null;
+        }
+        BlobValueData data = get(typeIndex, offset);
+        if (data != null) {
+            return data;
+        }
+        if (offset >= poolSize()) {
+            return null;
+        }
+        BlobValueData nearest = searchByIdx(true, offset);
+        int index;
+        if (nearest != null) {
+            index = nearest.getIndex() + 1;
+        } else {
+            index = 0;
+            BlobValueData last = getLast();
+            if (last != null && offset > last.getOffset()) {
+                index = last.getIndex() + 1;
+            }
+        }
+        data = new BlobValueData(typeIndex, offset);
+        add(index, data);
+        return data;
+    }
+
+    void onLinkCompleted() {
+        List<BlobValueData> dataList = asList();
+        int count = dataList.size();
+        for (int i = 0; i < count; i++) {
+            BlobValueData data = dataList.get(i);
+            data.linkValue();
+        }
+    }
+    public BlockReader getBlockReader() {
+        return getBlobByteArray().getBlockReader();
+    }
+
+    @Override
+    int updateOffsetIdxData() {
+        if (isModified()) {
+            updatePoolBytes();
+        }
+        return countEntryBytes();
+    }
+    public void updatePoolBytes() {
+        List<BlobValueData> sortedList = asList();
+        sortedList.sort(BlobValueData::compareBytes);
+        getBlobByteArray().writeEntries(sortedList.iterator());
+        this.mModified = false;
+    }
+
+    @Override
+    int countEntryBytes() {
+        return getBlobByteArray().size();
+    }
+    @Override
+    int onWriteEntryBytes(OutputStream stream) throws IOException {
+        return getBlobByteArray().writeBytes(stream);
+    }
+
+    @Override
+    public void onReadBytes(BlockReader reader) throws IOException {
+        MetadataSectionHeader sectionHeader = getSectionHeader();
+        reader.seek(sectionHeader.getOffset());
+        getBlobByteArray().onReadBytes(reader);
+        markModified();
+    }
+    public void markModified() {
+        mModified = true;
+    }
+    public boolean isModified() {
+        return mModified;
     }
 }

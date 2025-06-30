@@ -81,7 +81,7 @@ public class MetadataSectionType<T extends SectionData> {
         FIELD_DEFAULT_VALUES = new MetadataSectionType<>("FIELD_DEFAULT_VALUES",
                 FieldDefaultValueData::new);
         FIELD_AND_PARAMETER_DEFAULT_VALUE_DATA = new MetadataSectionType<>(
-                "FIELD_AND_PARAMETER_DEFAULT_VALUE_DATA", null);
+                "FIELD_AND_PARAMETER_DEFAULT_VALUE_DATA", BlobValueData.CREATOR);
         FIELD_MARSHALED_SIZE = new MetadataSectionType<>("FIELD_MARSHALED_SIZE",
                 FieldMarshaledSizeData::new);
         PARAMETERS = new MetadataSectionType<>("PARAMETERS", ParameterDefinitionData::new);

@@ -23,6 +23,7 @@ import com.reandroid.unity.metadata.base.VersionRange;
 import com.reandroid.unity.metadata.base.VersionSpecificItem;
 import com.reandroid.unity.metadata.data.SectionData;
 import com.reandroid.unity.metadata.section.MetadataSectionType;
+import com.reandroid.utils.ObjectsUtil;
 
 public class MetadataSectionHeader extends VersionSpecificItem {
 
@@ -44,8 +45,8 @@ public class MetadataSectionHeader extends VersionSpecificItem {
     public MetadataSectionType<?> getSectionType() {
         return sectionType;
     }
-    public Creator<? extends SectionData> getCreator() {
-        return getSectionType().getCreator();
+    public<T extends SectionData> Creator<T> getCreator() {
+        return ObjectsUtil.cast(getSectionType().getCreator());
     }
 
     public String getName() {

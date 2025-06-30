@@ -42,10 +42,10 @@ public class MetadataSection<T extends SectionData> extends FixedBlockContainer 
 
     private final SectionPoolMap<T> poolMap;
 
-    public MetadataSection(int childesCount, Creator<T> creator, MetadataSectionHeader sectionHeader) {
+    public MetadataSection(int childesCount, MetadataEntryList<T> entryList, MetadataSectionHeader sectionHeader) {
         super(childesCount + 2);
         this.sectionAlignment = new MetadataAlignment();
-        this.entryList = new MetadataEntryList<>(creator);
+        this.entryList = entryList;
         this.sectionHeader = sectionHeader;
 
         poolMap = newPoolMap();
@@ -53,14 +53,20 @@ public class MetadataSection<T extends SectionData> extends FixedBlockContainer 
         addChild(0, sectionAlignment);
         addChild(childesCount + 1, entryList);
     }
+    public MetadataSection(MetadataEntryList<T> entryList, MetadataSectionHeader sectionHeader) {
+        this(0, entryList, sectionHeader);
+    }
+    public MetadataSection(int childesCount, Creator<T> creator, MetadataSectionHeader sectionHeader) {
+        this(childesCount, new MetadataEntryList<>(creator), sectionHeader);
+    }
     public MetadataSection(int childesCount, MetadataSectionHeader sectionHeader) {
-        this(childesCount, ObjectsUtil.cast(sectionHeader.getCreator()), sectionHeader);
+        this(childesCount, sectionHeader.getCreator(), sectionHeader);
     }
     public MetadataSection(Creator<T> creator, MetadataSectionHeader sectionHeader) {
         this(0, creator, sectionHeader);
     }
     public MetadataSection(MetadataSectionHeader sectionHeader) {
-        this(0, ObjectsUtil.cast(sectionHeader.getCreator()), sectionHeader);
+        this(0, sectionHeader.getCreator(), sectionHeader);
     }
 
     public MetadataSectionType<T> getSectionType() {
@@ -118,6 +124,12 @@ public class MetadataSection<T extends SectionData> extends FixedBlockContainer 
     public SectionPoolMap<T> getPoolMap() {
         return poolMap;
     }
+    public void reBuildMap() {
+        getPoolMap().initialize(getCount(), getEntryList().iterator());
+    }
+    public boolean optimize() {
+        return false;
+    }
 
 
     public void onPreRemove(T item) {
@@ -142,7 +154,6 @@ public class MetadataSection<T extends SectionData> extends FixedBlockContainer 
         return sectionHeader.getSize();
     }
     public void notifyLinkCompleted() {
-
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package com.reandroid.unity.metadata.data;
 
+import com.reandroid.arsc.container.FixedBlockContainer;
 import com.reandroid.json.JSONObject;
 import com.reandroid.unity.metadata.base.VersionRange;
 import com.reandroid.unity.metadata.base.MDByteArray;
@@ -88,7 +89,7 @@ public class AssemblyDefinitionData extends SectionData implements TokenizedData
         jsonObject.put("token", token.getJson());
         jsonObject.put("attribute", customAttributeIndex.getJson());
         jsonObject.put("referenced_assemblies", referencedAssemblies.getJson());
-        jsonObject.put("assembly_name", assemblyName.getJson());
+        jsonObject.put("assembly_name", assemblyName.toJson());
         return jsonObject;
     }
 
@@ -101,7 +102,7 @@ public class AssemblyDefinitionData extends SectionData implements TokenizedData
                 + ", aname=" + assemblyName;
     }
 
-    public static class AssemblyName extends SectionData {
+    public static class AssemblyName extends FixedBlockContainer {
 
         public final CodeStringIndex nameIndex;
         public final MDUInt cultureIndex;
@@ -146,12 +147,6 @@ public class AssemblyDefinitionData extends SectionData implements TokenizedData
             addChild(11, public_key_token);
         }
 
-        @Override
-        public Object getJson() {
-            return toJson();
-        }
-
-        @Override
         public JSONObject toJson() {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("name", nameIndex.getJson());

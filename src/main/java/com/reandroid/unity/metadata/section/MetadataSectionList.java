@@ -118,6 +118,22 @@ public class MetadataSectionList extends FixedBlockContainer implements
         return ObjectsUtil.cast(sectionTypeMap.get(sectionType));
     }
 
+    public boolean optimize() {
+        refresh();
+        boolean optimized = false;
+        int size = this.size();
+        for (int i = 0; i < size; i++) {
+            MetadataSection<?> section = get(i);
+            if (section.optimize()) {
+                optimized = true;
+            }
+        }
+        if (optimized) {
+            refresh();
+        }
+        return optimized;
+    }
+
     public MetadataFileHeader getHeader() {
         return header;
     }

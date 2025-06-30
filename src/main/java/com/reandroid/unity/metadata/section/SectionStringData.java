@@ -62,16 +62,13 @@ public abstract class SectionStringData<T extends MDString> extends
         return ComputeIterator.of(iterator(), MDString::get);
     }
 
+    @Override
     public StringPoolMap<T> getPoolMap() {
         return (StringPoolMap<T>) super.getPoolMap();
     }
     @Override
     StringPoolMap<T> newPoolMap() {
         return new StringPoolMap<>();
-    }
-
-    public void reBuildMap() {
-        getPoolMap().initialize(getCount(), getEntryList().iterator());
     }
     public boolean clearDuplicates() {
         List<T> removeList = new ArrayCollection<>();

@@ -62,6 +62,7 @@ public class Il2CppTypeEnum {
     public static final Il2CppTypeEnum TYPE_INDEX;
 
     public static final Il2CppTypeEnum UNKNOWN;
+    public static final Il2CppTypeEnum StaticArrayInitType;
 
     private static final Il2CppTypeEnum[] VALUES_1;
     private static final Il2CppTypeEnum[] VALUES_2;
@@ -108,7 +109,8 @@ public class Il2CppTypeEnum {
         ENUM = new Il2CppTypeEnum("ENUM", 0x55, "Enum");
         TYPE_INDEX = new Il2CppTypeEnum("TYPE_INDEX", 0xff);
 
-        UNKNOWN = new Il2CppTypeEnum("UNKNOWN", 0xffffffff);
+        UNKNOWN = new Il2CppTypeEnum("UNKNOWN", -1);
+        StaticArrayInitType = new Il2CppTypeEnum("StaticArrayInitType", -2, "__StaticArrayInitTypeSize=");
 
         VALUES_1 = new Il2CppTypeEnum[] {
                 END,
@@ -240,6 +242,9 @@ public class Il2CppTypeEnum {
         if (type == null) {
             return null;
         }
+        if (isStaticArrayInitType(type)) {
+            return Il2CppTypeEnum.StaticArrayInitType;
+        }
         int i = type.lastIndexOf('.');
         if (i > 0) {
             String namespace = type.substring(0, i);
@@ -249,5 +254,22 @@ public class Il2CppTypeEnum {
             type = type.substring(i + 1);
         }
         return system_type_map.get(type);
+    }
+    public static boolean isStaticArrayInitType(String type) {
+        return getStaticArrayInitTypeSize(type) != null;
+    }
+    public static Integer getStaticArrayInitTypeSize(String type) {
+        if (type == null) {
+            return null;
+        }
+        String prefix = Il2CppTypeEnum.StaticArrayInitType.systemType();
+        if (!type.startsWith(prefix)) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(type.substring(prefix.length()));
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 }

@@ -22,7 +22,7 @@ import com.reandroid.unity.metadata.data.TypeDefinitionData;
 
 import java.io.IOException;
 
-public class ValueEnum extends MetadataValue implements LinkableItem {
+public class ValueEnum extends MetadataValue implements LinkableItem, ValueParent {
 
     private final SingleBlockContainer<MetadataValue> valueContainer;
 
@@ -36,25 +36,32 @@ public class ValueEnum extends MetadataValue implements LinkableItem {
     public MetadataValue getValue() {
         return valueContainer.getItem();
     }
+    public MetadataValue setValue(MetadataValue value) {
+        valueContainer.setItem(value);
+        if (value != null) {
+            value.clearEnumBlock();
+        }
+        return value;
+    }
 
     public String getEnumTypeName() {
-        TypeDefinitionData data = getEnumTypeDefinition();
+        TypeDefinitionData data = getValueTypeDefinition();
         if (data != null) {
             return data.getName();
         }
         return null;
     }
-    public TypeDefinitionData getEnumTypeDefinition() {
+    @Override
+    public TypeDefinitionData getValueTypeDefinition() {
         return getTypeEnumBlock().getEnumTypeIndex().getEnumTypeData();
     }
     @Override
     public void onReadBytes(BlockReader reader) throws IOException {
-        valueContainer.setItem(null);
+        setValue(null);
         super.onReadBytes(reader);
-        Il2CppTypeEnumBlock typeEnumBlock = getTypeEnumBlock();
-        valueContainer.setItem(MetadataValueFactory.forType(typeEnumBlock.getEnumElementType()));
-        valueContainer.getItem().clearEnumBlock();
-        valueContainer.onReadBytes(reader);
+        setValue(MetadataValueFactory.forType(
+                getTypeEnumBlock().getEnumElementType()))
+                .onReadBytes(reader);
     }
 
     @Override

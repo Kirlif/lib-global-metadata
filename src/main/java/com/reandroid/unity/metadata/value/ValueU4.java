@@ -15,32 +15,34 @@
  */
 package com.reandroid.unity.metadata.value;
 
-import com.reandroid.arsc.io.BlockReader;
-import com.reandroid.arsc.item.IntegerReference;
-import com.reandroid.unity.metadata.base.MDCompressedUInt32;
+import com.reandroid.arsc.item.LongReference;
+import com.reandroid.unity.metadata.base.MetadataInteger;
 import com.reandroid.unity.metadata.spec.PrimitiveSpec;
 
-import java.io.IOException;
+public class ValueU4 extends MetadataValue implements LongReference {
 
-public class ValueU4 extends MetadataValue implements IntegerReference {
-
-    private final MDCompressedUInt32 value;
+    private final MetadataInteger value;
 
     public ValueU4() {
         super(1, Il2CppTypeEnum.U4);
-        this.value = new MDCompressedUInt32();
+        this.value = new MetadataInteger(false);
 
         addChild(START_INDEX + 0, value);
     }
 
     @Override
-    public void onReadBytes(BlockReader reader) throws IOException {
-        super.onReadBytes(reader);
+    public int get() {
+        return value.get();
     }
 
     @Override
-    public int get() {
-        return value.get();
+    public long getLong() {
+        return value.getLong();
+    }
+
+    @Override
+    public void set(long l) {
+        value.set(l);
     }
 
     @Override
@@ -55,6 +57,6 @@ public class ValueU4 extends MetadataValue implements IntegerReference {
 
     @Override
     public String toString() {
-        return Integer.toString(get());
+        return Long.toString(getLong());
     }
 }

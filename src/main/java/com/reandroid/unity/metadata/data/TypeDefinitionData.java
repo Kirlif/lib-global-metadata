@@ -340,8 +340,6 @@ public class TypeDefinitionData extends SectionData implements TokenizedData {
     @Override
     public void onIndexLinked(Object linker) {
         if (isBaseDefinition()) {
-            nameIndex().link();
-            namespaceIndex().link();
             elementTypeIndex().link();
             parentIndex().link();
             getRgctxList().link();

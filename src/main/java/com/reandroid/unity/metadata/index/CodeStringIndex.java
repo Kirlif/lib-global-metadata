@@ -15,11 +15,14 @@
  */
 package com.reandroid.unity.metadata.index;
 
+import com.reandroid.arsc.io.BlockReader;
 import com.reandroid.unity.metadata.base.VersionRange;
 import com.reandroid.unity.metadata.data.CodeStringData;
 import com.reandroid.unity.metadata.data.SectionData;
 import com.reandroid.unity.metadata.section.MetadataSectionType;
 import com.reandroid.unity.metadata.spec.StringSpec;
+
+import java.io.IOException;
 
 public class CodeStringIndex extends DefinitionIndex<CodeStringData> {
 
@@ -58,6 +61,12 @@ public class CodeStringIndex extends DefinitionIndex<CodeStringData> {
             return idx;
         }
         return str;
+    }
+
+    @Override
+    public void onReadBytes(BlockReader reader) throws IOException {
+        super.onReadBytes(reader);
+        link();
     }
 
     @Override

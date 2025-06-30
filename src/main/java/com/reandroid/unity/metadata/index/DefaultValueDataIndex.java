@@ -74,11 +74,6 @@ public class DefaultValueDataIndex extends DefinitionIndex<BlobValueData> {
     }
 
     @Override
-    public int idxOf(BlobValueData data) {
-        return data.getOffset();
-    }
-
-    @Override
     public boolean enableUpdate() {
         return true;
     }

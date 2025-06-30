@@ -32,6 +32,7 @@ public class SectionData extends FixedBlockContainer implements
         IdxData, LinkableItem, JSONConvert<JSONObject>, JsonData {
 
     private SectionData mReplacement;
+    private Object mLastKey;
 
     public SectionData(int childesCount) {
         super(childesCount);
@@ -43,7 +44,15 @@ public class SectionData extends FixedBlockContainer implements
     }
 
     public Object getKey() {
-        return new DataKey(this);
+        return checkKey(new DataKey(this));
+    }
+    public<T> T checkKey(Object key) {
+        Object last = mLastKey;
+        if (!ObjectsUtil.equals(last, key)) {
+            last = key;
+            mLastKey = last;
+        }
+        return ObjectsUtil.cast(last);
     }
 
     public Spec getSpec() {
