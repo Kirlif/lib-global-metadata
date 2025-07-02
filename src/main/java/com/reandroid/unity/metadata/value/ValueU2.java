@@ -40,6 +40,11 @@ public class ValueU2 extends MetadataValue implements IntegerReference {
     }
 
     @Override
+    public Integer value() {
+        return get();
+    }
+
+    @Override
     public PrimitiveSpec.U2Spec getSpec() {
         return new PrimitiveSpec.U2Spec(get());
     }

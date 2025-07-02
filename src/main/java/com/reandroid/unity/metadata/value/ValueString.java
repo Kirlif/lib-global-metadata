@@ -53,6 +53,11 @@ public class ValueString extends MetadataValue implements StringReference {
     }
 
     @Override
+    public String value() {
+        return get();
+    }
+
+    @Override
     public StringSpec getSpec() {
         return StringSpec.of(get());
     }

@@ -48,6 +48,11 @@ public class ValueU8 extends MetadataValue implements LongReference {
     }
 
     @Override
+    public Long value() {
+        return getLong();
+    }
+
+    @Override
     public PrimitiveSpec.U8Spec getSpec() {
         return new PrimitiveSpec.U8Spec(getLong());
     }

@@ -15,11 +15,11 @@
  */
 package com.reandroid.unity.metadata.data;
 
-import com.reandroid.arsc.base.Block;
 import com.reandroid.arsc.base.Creator;
 import com.reandroid.arsc.container.SingleBlockContainer;
 import com.reandroid.arsc.io.BlockReader;
 import com.reandroid.json.JSONObject;
+import com.reandroid.unity.metadata.base.BytesKey;
 import com.reandroid.unity.metadata.index.TypeDefinitionIndex;
 import com.reandroid.unity.metadata.section.BlobDataPool;
 import com.reandroid.unity.metadata.section.MetadataSectionType;
@@ -28,9 +28,11 @@ import com.reandroid.unity.metadata.spec.Spec;
 import com.reandroid.unity.metadata.spec.SpecPair;
 import com.reandroid.unity.metadata.spec.TypeSpec;
 import com.reandroid.unity.metadata.util.CommonUtil;
-import com.reandroid.unity.metadata.value.*;
-import com.reandroid.utils.CompareUtil;
-import com.reandroid.utils.HexUtil;
+import com.reandroid.unity.metadata.value.Il2CppTypeEnum;
+import com.reandroid.unity.metadata.value.MetadataValue;
+import com.reandroid.unity.metadata.value.MetadataValueFactory;
+import com.reandroid.unity.metadata.value.ValueParent;
+import com.reandroid.unity.metadata.value.ValueUnknown;
 import com.reandroid.utils.ObjectsUtil;
 
 import java.io.IOException;
@@ -54,8 +56,8 @@ public class BlobValueData extends SectionData implements
     }
 
     @Override
-    public Key getKey() {
-        return checkKey(new Key(getBytes()));
+    public BytesKey getKey() {
+        return checkKey(new BytesKey(getBytes()));
     }
 
     public MetadataValue getValue() {
@@ -189,26 +191,15 @@ public class BlobValueData extends SectionData implements
         return CommonUtil.compareBytes(getKey().getBytes(),
                 byteValueData.getKey().getBytes());
     }
-    public int compareOffset(BlobValueData byteValueData) {
-        if (byteValueData == null) {
-            return -1;
-        }
-        if (byteValueData == this) {
-            return 0;
-        }
-        return CompareUtil.compare(getOffset(), byteValueData.getOffset());
-    }
 
     @Override
     public JSONObject toJson() {
         MetadataValue value = getValue();
         if (value != null) {
             JSONObject json = value.getJson();
-            if (value.getTypeEnum() == Il2CppTypeEnum.UNKNOWN &&
-                    typeIndex != TypeDefinitionIndex.NO_TYPE) {
+            if (value.getTypeEnum() == Il2CppTypeEnum.UNKNOWN) {
                 json.put("value_type", typeIndex.getJson());
             }
-            json.put("offset", getOffset());
             return json;
         }
         return super.toJson();
@@ -216,16 +207,7 @@ public class BlobValueData extends SectionData implements
 
     @Override
     public Object getJson() {
-        MetadataValue value = getValue();
-        if (value != null) {
-            JSONObject json = value.getJson();
-            if (value.getTypeEnum() == Il2CppTypeEnum.UNKNOWN && typeIndex != TypeDefinitionIndex.NO_TYPE) {
-                json.put("value_type", typeIndex.getJson());
-            }
-            json.put("offset", getOffset());
-            return json;
-        }
-        return toString();
+        return toJson();
     }
 
     @Override
@@ -255,49 +237,6 @@ public class BlobValueData extends SectionData implements
             return getOffset() + ": " + value.toString();
         }
         return getOffset() + ":" + getTypeName();
-    }
-
-    public static class Key implements Comparable<Key> {
-
-        private final byte[] bytes;
-
-        public Key(byte[] bytes) {
-            this.bytes = bytes;
-        }
-
-        public final byte[] getBytes() {
-            return bytes;
-        }
-
-        @Override
-        public int compareTo(Key key) {
-            if (key == this) {
-                return 0;
-            }
-            return CommonUtil.compareBytes(getBytes(), key.getBytes());
-        }
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null || getClass() != obj.getClass()) {
-                return false;
-            }
-            Key key = (Key) obj;
-            return Block.areEqual(bytes, key.bytes);
-        }
-
-        @Override
-        public int hashCode() {
-            return CommonUtil.hash(bytes);
-        }
-
-        @Override
-        public String toString() {
-            return HexUtil.toHexString(getBytes());
-        }
-
     }
 
     public static final Creator<BlobValueData> CREATOR = () -> {

@@ -28,7 +28,7 @@ public class ParameterDefinitionData extends SectionData implements TokenizedDat
 
     public final CodeStringIndex nameIndex;
     public final MetadataToken token;
-    public final DefinitionIndex<CustomAttributeData> customAttributeIndex;
+    public final DefinitionIndex<CustomAttributeInfoData> customAttributeIndex;
     public final TypeDefinitionIndex typeIndex;
 
     private ParameterDefaultValueData defaultValueData;
@@ -38,7 +38,7 @@ public class ParameterDefinitionData extends SectionData implements TokenizedDat
 
         this.nameIndex = new CodeStringIndex();
         this.token = new MetadataToken();
-        this.customAttributeIndex = new DefinitionIndex<>(MetadataSectionType.ATTRIBUTE_DATA,
+        this.customAttributeIndex = new DefinitionIndex<>(MetadataSectionType.ATTRIBUTES_INFO,
                 new VersionRange(null, 24.0));
         this.typeIndex = new TypeDefinitionIndex();
 

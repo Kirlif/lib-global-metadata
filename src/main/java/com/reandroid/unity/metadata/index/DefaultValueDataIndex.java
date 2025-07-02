@@ -72,10 +72,12 @@ public class DefaultValueDataIndex extends DefinitionIndex<BlobValueData> {
         }
         return null;
     }
-
-    @Override
-    public boolean enableUpdate() {
-        return true;
+    public Object value() {
+        MetadataValue value = getValue();
+        if (value != null) {
+            return value.value();
+        }
+        return null;
     }
 
     @Override

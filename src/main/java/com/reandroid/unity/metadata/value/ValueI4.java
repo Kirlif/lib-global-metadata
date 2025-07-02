@@ -41,13 +41,13 @@ public class ValueI4 extends MetadataValue implements IntegerReference {
     }
 
     @Override
-    public PrimitiveSpec.I4Spec getSpec() {
-        return new PrimitiveSpec.I4Spec(get());
+    public Integer value() {
+        return get();
     }
 
     @Override
-    public Object getJsonValue() {
-        return get();
+    public PrimitiveSpec.I4Spec getSpec() {
+        return new PrimitiveSpec.I4Spec(get());
     }
 
     @Override

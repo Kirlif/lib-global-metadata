@@ -19,12 +19,10 @@ import com.reandroid.arsc.container.FixedBlockContainer;
 import com.reandroid.arsc.io.BlockReader;
 import com.reandroid.arsc.item.IntegerReference;
 import com.reandroid.json.JSONObject;
-import com.reandroid.unity.metadata.section.MetadataSectionList;
-import com.reandroid.unity.metadata.base.MDCompressedSInt32;
+import com.reandroid.unity.metadata.base.MetadataInteger;
+import com.reandroid.unity.metadata.index.TypeDefinitionIndex;
 import com.reandroid.unity.metadata.base.MDUByte;
 import com.reandroid.unity.metadata.data.TypeDefinitionData;
-import com.reandroid.unity.metadata.section.MetadataSection;
-import com.reandroid.unity.metadata.section.MetadataSectionType;
 
 import java.io.IOException;
 
@@ -57,36 +55,43 @@ public class Il2CppTypeEnumBlock extends FixedBlockContainer {
     }
 
     public Il2CppTypeEnum getTypeEnum() {
-        return getEnumTypeIndex().getTypeEnum();
+        return enumTypeIndex.getTypeEnum();
     }
     public void setTypeEnum(Il2CppTypeEnum typeEnum) {
-        getEnumTypeIndex().setTypeEnum(typeEnum);
+        enumTypeIndex.setTypeEnum(typeEnum);
     }
     public Il2CppTypeEnum getEnumElementType() {
-        return getEnumTypeIndex().getEnumElementType();
+        return enumTypeIndex.getEnumElementType();
     }
     public boolean isEnum() {
-        return getEnumTypeIndex().isEnum();
+        return enumTypeIndex.isEnum();
     }
-    public EnumTypeIndex getEnumTypeIndex() {
-        return enumTypeIndex;
+    public TypeDefinitionData getTypeDefinition() {
+        return enumTypeIndex.getTypeDefinition();
+    }
+    public TypeDefinitionData getElementDefinition() {
+        return enumTypeIndex.getElementDefinition();
     }
 
     @Override
     public String toString() {
-        return getEnumTypeIndex().toString();
+        return enumTypeIndex.toString();
     }
 
-    public static class EnumTypeIndex extends MDCompressedSInt32 {
+    static class EnumTypeIndex extends MetadataInteger {
 
         private final IntegerReference type;
-
-        private TypeDefinitionData enumType;
-        private TypeDefinitionData enumElementType;
+        private final TypeDefinitionIndex enumTypeIndex;
 
         public EnumTypeIndex(IntegerReference type) {
-            super();
+            super(true);
             this.type = type;
+
+            TypeDefinitionIndex typeIndex = new TypeDefinitionIndex(this);
+            this.enumTypeIndex = typeIndex;
+
+            typeIndex.setParent(this);
+            typeIndex.setIndex(0);
         }
 
         public Il2CppTypeEnum getTypeEnum() {
@@ -102,29 +107,33 @@ public class Il2CppTypeEnumBlock extends FixedBlockContainer {
             return null;
         }
         public String getTypeName() {
-            TypeDefinitionData data = getEnumTypeData();
+            TypeDefinitionData data = getTypeDefinition();
             if (data != null) {
-                return data.getName();
+                return data.getTypeName();
             }
             return null;
         }
         public String getElementName() {
-            TypeDefinitionData data = getEnumElementTypeData();
+            TypeDefinitionData data = getElementDefinition();
             if (data != null) {
-                return data.getName();
+                return data.getTypeName();
             }
             return null;
         }
 
-        public TypeDefinitionData getEnumTypeData() {
-            return enumType;
+        public TypeDefinitionData getTypeDefinition() {
+            return enumTypeIndex.getData();
         }
-        public TypeDefinitionData getEnumElementTypeData() {
-            return enumElementType;
+        public TypeDefinitionData getElementDefinition() {
+            return enumTypeIndex.getElementType();
         }
 
         public boolean isEnum() {
             return type.get() == Il2CppTypeEnum.ENUM.value();
+        }
+        @Override
+        public boolean hasValidVersion() {
+            return isEnum();
         }
         @Override
         public boolean isNull() {
@@ -137,19 +146,7 @@ public class Il2CppTypeEnumBlock extends FixedBlockContainer {
                 return;
             }
             super.onReadBytes(reader);
-            linkDefinitions();
-        }
-        private void linkDefinitions() {
-            MetadataSection<TypeDefinitionData> section = getTypeSection();
-            TypeDefinitionData enumType = section.getByIdx(this.get());
-            this.enumType = enumType;
-            enumType.getDefinition().link();
-            this.enumElementType = enumType.elementTypeIndex().getData();
-            this.enumElementType.getDefinition().link();
-        }
-        private MetadataSection<TypeDefinitionData> getTypeSection() {
-            MetadataSectionList sectionList = getParentInstance(MetadataSectionList.class);
-            return  sectionList.getSection(MetadataSectionType.TYPE_DEFINITIONS);
+            enumTypeIndex.linkTypes();
         }
         public Object toJson() {
             JSONObject jsonObject = new JSONObject();

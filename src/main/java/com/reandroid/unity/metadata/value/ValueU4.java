@@ -46,6 +46,11 @@ public class ValueU4 extends MetadataValue implements LongReference {
     }
 
     @Override
+    public Long value() {
+        return getLong();
+    }
+
+    @Override
     public PrimitiveSpec.U4Spec getSpec() {
         return new PrimitiveSpec.U4Spec(get());
     }

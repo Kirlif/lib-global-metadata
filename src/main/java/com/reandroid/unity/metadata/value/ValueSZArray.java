@@ -19,10 +19,11 @@ import com.reandroid.arsc.container.BlockList;
 import com.reandroid.arsc.io.BlockReader;
 import com.reandroid.arsc.item.BooleanReference;
 import com.reandroid.arsc.item.IntegerReference;
-import com.reandroid.unity.metadata.base.JsonData;
+import com.reandroid.json.JSONArray;
+import com.reandroid.json.JSONObject;
 import com.reandroid.unity.metadata.base.LinkableItem;
 import com.reandroid.unity.metadata.base.MDBlockItem;
-import com.reandroid.unity.metadata.base.MDCompressedSInt32;
+import com.reandroid.unity.metadata.base.MetadataInteger;
 import com.reandroid.unity.metadata.data.TypeDefinitionData;
 import com.reandroid.unity.metadata.spec.SpecList;
 import com.reandroid.utils.StringsUtil;
@@ -33,14 +34,14 @@ import java.util.Iterator;
 
 public class ValueSZArray extends MetadataValue implements LinkableItem {
 
-    private final MDCompressedSInt32 arrayLength;
+    private final MetadataInteger arrayLength;
     private final DifferentArrayBoolean arrayElementsAreDifferent;
     private final Il2CppTypeEnumBlock arrayElementType;
     private final BlockList<MetadataValue> elementList;
 
     public ValueSZArray() {
         super(4, Il2CppTypeEnum.SZARRAY);
-        this.arrayLength = new MDCompressedSInt32();
+        this.arrayLength = new MetadataInteger(true);
         this.arrayElementsAreDifferent = new DifferentArrayBoolean(arrayLength);
         this.arrayElementType = new Il2CppTypeEnumBlock();
         this.elementList = new SZArrayElementList(arrayLength, arrayElementsAreDifferent, arrayElementType);
@@ -51,8 +52,37 @@ public class ValueSZArray extends MetadataValue implements LinkableItem {
         addChild(START_INDEX + 3, elementList);
     }
 
+    public int size() {
+        return elementList.size();
+    }
+    public MetadataValue get(int i) {
+        return elementList.get(i);
+    }
     public Iterator<MetadataValue> iterator() {
         return elementList.iterator();
+    }
+
+    public boolean isNullArray() {
+        return elementList.isNull();
+    }
+
+    public Iterator<Object> values() {
+        return ComputeIterator.of(iterator(), MetadataValue::value);
+    }
+    public Object valueAt(int i) {
+        return get(i).value();
+    }
+    @Override
+    public Object[] value() {
+        if (isNullArray()) {
+            return null;
+        }
+        int length = size();
+        Object[] values = new Object[length];
+        for (int i = 0; i < length; i++) {
+            values[i] = valueAt(i);
+        }
+        return values;
     }
     @Override
     public void link() {
@@ -66,7 +96,15 @@ public class ValueSZArray extends MetadataValue implements LinkableItem {
 
     @Override
     public Object getJsonValue() {
-        return JsonData.toJsonArray(elementList);
+        if (isNullArray()) {
+            return JSONObject.NULL;
+        }
+        int size = size();
+        JSONArray jsonArray = new JSONArray(size);
+        for (int i = 0; i < size; i++) {
+            jsonArray.put(valueAt(i));
+        }
+        return jsonArray;
     }
     @Override
     public String toString() {
@@ -124,8 +162,7 @@ public class ValueSZArray extends MetadataValue implements LinkableItem {
 
         @Override
         public TypeDefinitionData getValueTypeDefinition() {
-            return arrayElementType.getEnumTypeIndex()
-                    .getEnumElementTypeData();
+            return arrayElementType.getTypeDefinition();
         }
 
         @Override

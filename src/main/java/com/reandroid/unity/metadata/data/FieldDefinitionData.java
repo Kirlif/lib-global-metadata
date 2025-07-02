@@ -91,6 +91,16 @@ public class FieldDefinitionData extends SectionData implements TokenizedData {
     public void setDefaultValueData(FieldDefaultValueData defaultValueData) {
         this.defaultValueData = defaultValueData;
     }
+    public boolean hasDefaultValue() {
+        return getDefaultValueData() != null;
+    }
+    public Object defaultValue() {
+        FieldDefaultValueData data = getDefaultValueData();
+        if (data != null) {
+            return data.value();
+        }
+        return null;
+    }
 
     public String getModifiers() {
         TypeDefinitionData type = getType();
@@ -130,10 +140,20 @@ public class FieldDefinitionData extends SectionData implements TokenizedData {
     }
     @Override
     public String toString() {
-        return "name=" + nameIndex
-                + ", type=" + typeIndex
-                + ", customAttribute=" + customAttributeIndex
-                + ", token=" + token;
+        StringBuilder builder = new StringBuilder();
+        builder.append("name=");
+        builder.append(nameIndex);
+        builder.append(", type=");
+        builder.append(typeIndex);
+        builder.append(", customAttribute=");
+        builder.append(customAttributeIndex);
+        builder.append(", token=");
+        builder.append(token);
+        if (hasDefaultValue()) {
+            builder.append(", default=");
+            builder.append(defaultValue());
+        }
+        return builder.toString();
     }
 
     public static final int FIELD_ATTRIBUTE_FIELD_ACCESS_MASK = 0x0007;

@@ -27,7 +27,6 @@ import com.reandroid.unity.metadata.section.MetadataSectionType;
 import com.reandroid.unity.metadata.spec.Spec;
 import com.reandroid.utils.ObjectsUtil;
 
-
 public class DefinitionIndex<T extends SectionData> extends MDInt implements
         BlockRefresh, LinkableItem {
 
@@ -75,6 +74,9 @@ public class DefinitionIndex<T extends SectionData> extends MDInt implements
         setDataInternal(data);
     }
     public int idxOf(T data) {
+        if (data == null) {
+            return SectionData.INVALID_IDX;
+        }
         return data.getIdx();
     }
 
@@ -99,7 +101,7 @@ public class DefinitionIndex<T extends SectionData> extends MDInt implements
             this.mData = data;
             if (data != null) {
                 onLinked(data);
-            } else {
+            } else if (idxOf(null) != idx && getSectionType() != null){
                 onLinkFailed(idx);
             }
         }
@@ -123,7 +125,10 @@ public class DefinitionIndex<T extends SectionData> extends MDInt implements
         }
     }
     public boolean enableUpdate() {
-        return false;
+        MetadataSectionType<?> type = getSectionType();
+        return type == MetadataSectionType.ATTRIBUTE_DATA ||
+                type == MetadataSectionType.CODE_STRING ||
+                type == MetadataSectionType.FIELD_AND_PARAMETER_DEFAULT_VALUE_DATA;
     }
 
     private void update() {
@@ -135,13 +140,7 @@ public class DefinitionIndex<T extends SectionData> extends MDInt implements
                 data = replace;
             }
         }
-        int idx;
-        if (data == null) {
-            idx = SectionData.INVALID_IDX;
-        } else {
-            idx = idxOf(data);
-        }
-        set(idx);
+        set(idxOf(data));
     }
 
     public MetadataSection<T> getSection() {

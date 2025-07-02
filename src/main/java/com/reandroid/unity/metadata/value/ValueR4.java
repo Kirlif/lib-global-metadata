@@ -35,13 +35,22 @@ public class ValueR4 extends MetadataValue {
     }
 
     @Override
+    public Float value() {
+        return get();
+    }
+
+    @Override
     public PrimitiveSpec.R4Spec getSpec() {
         return new PrimitiveSpec.R4Spec(get());
     }
 
     @Override
     public Object getJsonValue() {
-        return value.get();
+        Float f = value();
+        if (f.isInfinite() || f.isNaN()) {
+            return get() + "f";
+        }
+        return f;
     }
     @Override
     public String toString() {

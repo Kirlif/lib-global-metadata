@@ -15,14 +15,12 @@
  */
 package com.reandroid.unity.metadata.index;
 
-import com.reandroid.arsc.io.BlockReader;
+import com.reandroid.arsc.item.IntegerReference;
 import com.reandroid.unity.metadata.base.VersionRange;
 import com.reandroid.unity.metadata.data.TypeDefinitionData;
 import com.reandroid.unity.metadata.section.MetadataSectionType;
 import com.reandroid.unity.metadata.spec.TypeSpec;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 
 public class TypeDefinitionIndex extends DefinitionIndex<TypeDefinitionData> {
 
@@ -31,6 +29,9 @@ public class TypeDefinitionIndex extends DefinitionIndex<TypeDefinitionData> {
     }
     public TypeDefinitionIndex() {
         super(MetadataSectionType.TYPE_DEFINITIONS, null);
+    }
+    public TypeDefinitionIndex(IntegerReference reference) {
+        super(MetadataSectionType.TYPE_DEFINITIONS, null, reference);
     }
     public String getName() {
         TypeDefinitionData data = getData();
@@ -46,18 +47,31 @@ public class TypeDefinitionIndex extends DefinitionIndex<TypeDefinitionData> {
         }
         return null;
     }
-
-    @Override
-    public TypeSpec getSpec() {
-        return (TypeSpec) super.getSpec();
-    }
-
     public String getTypeName() {
         TypeDefinitionData data = getData();
         if (data != null) {
             return data.getTypeName();
         }
         return null;
+    }
+    public String getElementTypeName() {
+        TypeDefinitionData data = getElementType();
+        if (data != null) {
+            return data.getTypeName();
+        }
+        return null;
+    }
+    public TypeDefinitionData getElementType() {
+        TypeDefinitionData data = getData();
+        if (data != null) {
+            return data.elementTypeIndex().getData();
+        }
+        return null;
+    }
+
+    @Override
+    public TypeSpec getSpec() {
+        return (TypeSpec) super.getSpec();
     }
 
     public void linkTypes() {
@@ -67,6 +81,7 @@ public class TypeDefinitionIndex extends DefinitionIndex<TypeDefinitionData> {
             data.parentIndex().link();
             data.elementTypeIndex().link();
             data.declaringTypeIndex().link();
+            data.getFieldList().link();
         }
     }
 
@@ -74,48 +89,4 @@ public class TypeDefinitionIndex extends DefinitionIndex<TypeDefinitionData> {
     public String toString() {
         return get() + "{" + getName() + "}";
     }
-
-    public static final TypeDefinitionIndex NO_TYPE = new TypeDefinitionIndex() {
-        @Override
-        public boolean isNull() {
-            return true;
-        }
-        @Override
-        public void link() {
-        }
-        @Override
-        protected void onLinked(TypeDefinitionData data) {
-        }
-        @Override
-        public void onIndexLinked(Object linker) {
-        }
-        @Override
-        public void setData(TypeDefinitionData data) {
-        }
-        @Override
-        public void setDataInternal(TypeDefinitionData data) {
-        }
-        @Override
-        public void onReadBytes(BlockReader reader) {
-        }
-        @Override
-        public int readBytes(InputStream inputStream) {
-            return 0;
-        }
-        @Override
-        protected int onWriteBytes(OutputStream stream) {
-            return 0;
-        }
-        @Override
-        public int get() {
-            return -1;
-        }
-        @Override
-        public void set(int value) {
-        }
-        @Override
-        public String toString() {
-            return "NO_TYPE";
-        }
-    };
 }

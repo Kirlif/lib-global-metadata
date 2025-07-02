@@ -41,6 +41,9 @@ public class FieldDefaultValueData extends SectionData {
         addChild(2, dataIndex);
     }
 
+    public Object value() {
+        return dataIndex.value();
+    }
     @Override
     public void link() {
         super.link();

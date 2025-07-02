@@ -19,29 +19,29 @@ import com.reandroid.json.JSONObject;
 import com.reandroid.unity.metadata.index.DefinitionIndex;
 import com.reandroid.unity.metadata.section.MetadataSection;
 import com.reandroid.unity.metadata.section.MetadataSectionType;
-import com.reandroid.unity.metadata.section.SectionCustomAttributeData;
 
 public class CustomAttributeDataRange extends SectionData implements TokenizedData {
 
     private final MetadataToken token;
-    private final DefinitionIndex<CustomAttributeData> offset;
+    private final DefinitionIndex<CustomAttributeData> dataOffset;
 
     public CustomAttributeDataRange() {
         super(2);
         this.token = new MetadataToken();
-        this.offset = new DefinitionIndex<CustomAttributeData>(MetadataSectionType.ATTRIBUTE_DATA) {
-            @Override
-            public CustomAttributeData pullData(MetadataSection<CustomAttributeData> section, int idx) {
-                return ((SectionCustomAttributeData) section).getByOffset(idx);
-            }
+        this.dataOffset = new DefinitionIndex<CustomAttributeData>(MetadataSectionType.ATTRIBUTE_DATA) {
+
             @Override
             public int idxOf(CustomAttributeData data) {
-                return data.getOffset();
+                if (data == null) {
+                    MetadataSection<CustomAttributeData> section = getSection();
+                    return section.getSectionSize() - section.getEntriesAlignment().size();
+                }
+                return super.idxOf(data);
             }
         };
 
         addChild(0, token);
-        addChild(1, offset);
+        addChild(1, dataOffset);
     }
 
 
@@ -49,43 +49,26 @@ public class CustomAttributeDataRange extends SectionData implements TokenizedDa
     public MetadataToken getToken() {
         return token;
     }
-    public DefinitionIndex<CustomAttributeData> getOffset() {
-        return offset;
+    public DefinitionIndex<CustomAttributeData> getDataOffset() {
+        return dataOffset;
     }
 
     public CustomAttributeData getAttributeData() {
-        return getOffset().getData();
-    }
-    public void setAttributeData(CustomAttributeData data) {
-        getOffset().setData(data);
-    }
-
-    @Override
-    protected void onRefreshed() {
-        super.onRefreshed();
-        // FIXME: allow null data, uncomment the next line
-        //setAttributeData(getAttributeData());
-        // FIXME: remove the next lines
-        CustomAttributeData data = getAttributeData();
-        if (data != null) {
-            setAttributeData(data);
-        }
+        return getDataOffset().getData();
     }
 
     @Override
     public JSONObject toJson() {
         JSONObject jsonObject = new JSONObject();
+        jsonObject.put("offset", dataOffset.get());
         jsonObject.put("token", token.getJson());
-        jsonObject.put("offset", offset.getJson());
+        jsonObject.put("data", dataOffset.getJson());
         return jsonObject;
     }
 
     @Override
     public Object getJson() {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("token", token.getJson());
-        jsonObject.put("offset", offset.getJson());
-        return jsonObject;
+        return toJson();
     }
 
     @Override

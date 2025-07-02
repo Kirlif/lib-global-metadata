@@ -32,7 +32,7 @@ public class EventDefinitionData extends SectionData implements TokenizedData {
     public final MDInt add;
     public final MDInt remove;
     public final MDInt raise;
-    public final DefinitionIndex<CustomAttributeData> customAttributeIndex;
+    public final DefinitionIndex<CustomAttributeInfoData> customAttributeIndex;
     public final MetadataToken token;
 
     public EventDefinitionData() {
@@ -43,7 +43,7 @@ public class EventDefinitionData extends SectionData implements TokenizedData {
         this.add = new MDInt();
         this.remove = new MDInt();
         this.raise = new MDInt();
-        this.customAttributeIndex = new DefinitionIndex<>(MetadataSectionType.ATTRIBUTE_DATA,
+        this.customAttributeIndex = new DefinitionIndex<>(MetadataSectionType.ATTRIBUTES_INFO,
                 new VersionRange(null, 24.0));
         this.token = new MetadataToken(new VersionRange(19.0, null));
 

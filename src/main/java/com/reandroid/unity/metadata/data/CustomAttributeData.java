@@ -20,6 +20,7 @@ import com.reandroid.arsc.io.BlockReader;
 import com.reandroid.json.JSONObject;
 import com.reandroid.unity.metadata.attribute.AttributeInstance;
 import com.reandroid.unity.metadata.attribute.ArgumentValue;
+import com.reandroid.unity.metadata.base.BytesKey;
 import com.reandroid.unity.metadata.base.JsonData;
 import com.reandroid.unity.metadata.base.LinkableItem;
 import com.reandroid.unity.metadata.base.MDCompressedUInt32;
@@ -33,7 +34,7 @@ import com.reandroid.utils.collection.IterableIterator;
 import java.io.IOException;
 import java.util.Iterator;
 
-public class CustomAttributeData extends SectionData {
+public class CustomAttributeData extends SectionData implements OffsetIdxData {
 
     private final MDCompressedUInt32 count;
     private final CountedBlockList<MethodDefinitionIndex> constructorIndexes;
@@ -68,11 +69,28 @@ public class CustomAttributeData extends SectionData {
     public Iterator<AttributeInstance> getConstructorArguments() {
         return constructorArgumentList.iterator();
     }
+
+    @Override
+    public int getIdx() {
+        return getOffset();
+    }
+
+    @Override
+    public BytesKey getKey() {
+        return checkKey(new BytesKey(getBytes()));
+    }
+
+    @Override
     public int getOffset() {
         return mOffset;
     }
+    @Override
     public void setOffset(int offset) {
         this.mOffset = offset;
+    }
+    @Override
+    public int getDataSize() {
+        return countBytes();
     }
 
     @Override

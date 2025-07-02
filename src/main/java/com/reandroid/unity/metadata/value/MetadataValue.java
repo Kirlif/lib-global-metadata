@@ -68,14 +68,26 @@ public class MetadataValue extends FixedBlockContainer implements DirectStreamRe
     @Override
     public JSONObject getJson() {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("type", getTypeEnum().name());
+        Il2CppTypeEnum typeEnum = getTypeEnum();
+        if (typeEnum == Il2CppTypeEnum.StaticArrayInitType) {
+            jsonObject.put("type", Il2CppTypeEnum.getStaticArrayInitTypeName(countBytes()));
+        } else {
+            jsonObject.put("type", typeEnum.name());
+        }
         jsonObject.put("value", getJsonValue());
         return jsonObject;
     }
     public Spec getSpec() {
         return null;
     }
+    public Object value() {
+        return null;
+    }
     public Object getJsonValue() {
+        Object obj = value();
+        if (obj != null) {
+            return obj;
+        }
         Spec spec = getSpec();
         if (spec != null) {
             return spec.json();

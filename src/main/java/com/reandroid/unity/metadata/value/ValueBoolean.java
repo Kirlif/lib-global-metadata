@@ -35,16 +35,16 @@ public class ValueBoolean extends MetadataValue {
     }
 
     @Override
+    public Boolean value() {
+        return get();
+    }
+
+    @Override
     public PrimitiveSpec.BooleanSpec getSpec() {
         if (get()) {
             return PrimitiveSpec.BooleanSpec.TRUE;
         }
         return PrimitiveSpec.BooleanSpec.FALSE;
-    }
-
-    @Override
-    public Object getJsonValue() {
-        return get();
     }
 
     @Override

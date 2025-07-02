@@ -33,7 +33,7 @@ public class ImageDefinitionData extends SectionData implements TokenizedData {
     public final TypeDefinitionIndexList exportTypeList;
     public final MDInt entryPointIndex;
     public final MetadataToken token;
-    public final DefinitionIndexList<CustomAttributeData> customAttributeList;
+    public final DefinitionIndexList<CustomAttributeDataRange> customAttributeList;
 
     public ImageDefinitionData() {
         super(7);
@@ -44,7 +44,7 @@ public class ImageDefinitionData extends SectionData implements TokenizedData {
         this.exportTypeList = new TypeDefinitionIndexList(new VersionRange(24.0, null));
         this.entryPointIndex = new MDInt();
         this.token = new MetadataToken(new VersionRange(19.0, null));
-        this.customAttributeList = new DefinitionIndexList<>(MetadataSectionType.ATTRIBUTE_DATA,
+        this.customAttributeList = new DefinitionIndexList<>(MetadataSectionType.ATTRIBUTE_DATA_RANGE,
                 new VersionRange(24.1, null));
 
         addChild(0, nameIndex);

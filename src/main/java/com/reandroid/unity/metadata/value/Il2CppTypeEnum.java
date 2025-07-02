@@ -272,4 +272,7 @@ public class Il2CppTypeEnum {
             return null;
         }
     }
+    public static String getStaticArrayInitTypeName(int size) {
+        return StaticArrayInitType.systemType() + size;
+    }
 }

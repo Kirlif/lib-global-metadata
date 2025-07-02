@@ -39,14 +39,17 @@ public class ValueChar extends MetadataValue {
     public void set(char c) {
         charBlock.set(c);
     }
+
+    @Override
+    public Character value() {
+        return get();
+    }
+
     @Override
     public PrimitiveSpec.CharSpec getSpec() {
         return new PrimitiveSpec.CharSpec(get());
     }
-    @Override
-    public Object getJsonValue() {
-        return get();
-    }
+
     @Override
     public String toString() {
         return "'" + get() + "'";

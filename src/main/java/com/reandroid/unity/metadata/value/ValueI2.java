@@ -48,12 +48,13 @@ public class ValueI2 extends MetadataValue implements IntegerReference {
     }
 
     @Override
+    public Short value() {
+        return (short) get();
+    }
+
+    @Override
     public PrimitiveSpec.I2Spec getSpec() {
         return new PrimitiveSpec.I2Spec((short) get());
-    }
-    @Override
-    public Object getJsonValue() {
-        return get();
     }
 
     @Override

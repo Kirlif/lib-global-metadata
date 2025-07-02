@@ -50,10 +50,20 @@ public class SectionCustomAttributeData extends MetadataSection<CustomAttributeD
         sectionReader.close();
     }
 
-    public CustomAttributeData getByOffset(int offset) {
-        return getEntryList().search(offset, CustomAttributeData::getOffset);
+    @Override
+    public CustomAttributeData getByIdx(int idx) {
+        return searchByIdx(idx);
     }
 
+    @Override
+    public boolean optimize() {
+        return clearDuplicates();
+    }
+
+    public boolean clearDuplicates() {
+        // TODO: confirm compressible
+        return false;
+    }
     @Override
     int sizeOfEntry() {
         return 0;

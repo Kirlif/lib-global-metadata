@@ -76,10 +76,15 @@ public class ValueStaticArrayInitType extends MetadataValue {
         return byteArray;
     }
 
+    @Override
+    public byte[] value() {
+        return getByteArray().getBytes();
+    }
+
     public TypeDefinitionData getValueTypeDefinition() {
-        ValueParent blobValueData = getParentInstance(ValueParent.class);
-        if (blobValueData != null) {
-            return blobValueData.getValueTypeDefinition();
+        ValueParent valueParent = getParentInstance(ValueParent.class);
+        if (valueParent != null) {
+            return valueParent.getValueTypeDefinition();
         }
         return null;
     }

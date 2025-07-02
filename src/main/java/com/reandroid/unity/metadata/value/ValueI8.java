@@ -48,13 +48,13 @@ public class ValueI8 extends MetadataValue implements LongReference {
     }
 
     @Override
-    public PrimitiveSpec.I8Spec getSpec() {
-        return new PrimitiveSpec.I8Spec(getLong());
+    public Long value() {
+        return getLong();
     }
 
     @Override
-    public Object getJsonValue() {
-        return getLong();
+    public PrimitiveSpec.I8Spec getSpec() {
+        return new PrimitiveSpec.I8Spec(getLong());
     }
 
     @Override

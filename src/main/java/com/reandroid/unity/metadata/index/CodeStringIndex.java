@@ -46,11 +46,6 @@ public class CodeStringIndex extends DefinitionIndex<CodeStringData> {
     }
 
     @Override
-    public boolean enableUpdate() {
-        return true;
-    }
-
-    @Override
     public Object getJson() {
         int idx = get();
         if (idx == SectionData.INVALID_IDX) {

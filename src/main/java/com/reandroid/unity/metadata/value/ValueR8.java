@@ -33,6 +33,11 @@ public class ValueR8 extends MetadataValue {
     public void set(double value) {
         this.value.set(Double.doubleToLongBits(value));
     }
+
+    @Override
+    public Double value() {
+        return get();
+    }
     @Override
     public PrimitiveSpec.R8Spec getSpec() {
         return new PrimitiveSpec.R8Spec(get());
@@ -40,9 +45,12 @@ public class ValueR8 extends MetadataValue {
 
     @Override
     public Object getJsonValue() {
-        return value.getLong();
+        Double d = value();
+        if (d.isInfinite() || d.isNaN()) {
+            return d.toString();
+        }
+        return d;
     }
-
     @Override
     public String toString() {
         return Double.toString(get());
